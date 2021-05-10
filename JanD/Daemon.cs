@@ -36,7 +36,7 @@ namespace JanD
                 var proc = Processes.FirstOrDefault(p => p.Name == name);
                 if (proc == null)
                 {
-                    if(throwOnNotFound)
+                    if (throwOnNotFound)
                         throw new("invalid-process");
                 }
 
@@ -257,7 +257,10 @@ namespace JanD
         {
             public string Name { get; set; }
             public string Command { get; set; }
-            public JanDNewProcess(string name, string command) => (Name, Command) = (name, command);
+            public string WorkingDirectory { get; set; }
+
+            public JanDNewProcess(string name, string command, string dir) =>
+                (Name, Command, WorkingDirectory) = (name, command, dir);
         }
     }
 

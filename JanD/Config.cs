@@ -16,6 +16,7 @@ namespace JanD
     {
         public string Name { get; set; }
         public string Command { get; set; }
+        public string WorkingDirectory { get; set; }
         [JsonIgnore] public Process Process { get; set; }
         public bool AutoRestart { get; set; }
         public bool Enabled { get; set; }
@@ -40,7 +41,8 @@ namespace JanD
                 RedirectStandardInput = false,
                 UseShellExecute = false,
                 StandardErrorEncoding = Encoding.UTF8,
-                StandardOutputEncoding = Encoding.UTF8
+                StandardOutputEncoding = Encoding.UTF8,
+                WorkingDirectory = proc.WorkingDirectory ?? Directory.GetCurrentDirectory()
             };
             process.StartInfo = startInfo;
             process.EnableRaisingEvents = true;

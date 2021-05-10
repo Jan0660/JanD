@@ -9,7 +9,7 @@ namespace JanD
 {
     public static class Program
     {
-        public const string DefaultPipeName = "cock";
+        public const string DefaultPipeName = "jand";
         public static string PipeName;
 
         static async Task Main(string[] args)
@@ -37,7 +37,7 @@ namespace JanD
                         var client = new IpcClient();
                         var str = client.RequestString("new-process",
                             JsonSerializer.Serialize(new Daemon.JanDNewProcess(args[1],
-                                String.Join(' ', args[2..]))));
+                                String.Join(' ', args[2..]), Directory.GetCurrentDirectory())));
                         Console.WriteLine(str);
                         str = client.RequestString("start-process", args[1]);
                         Console.WriteLine(str);
@@ -83,14 +83,6 @@ namespace JanD
                                 > (int)1e3 => (mem / (int) 1e3) + "KB",
                                 _ => mem.ToString()
                             };
-                            // if (mem > 1e9)
-                            //     memString = (mem / (int) 1e9) + "GB";
-                            // else if (mem > 1e6)
-                            //     memString = (mem / (int) 1e6) + "MB";
-                            // else if (mem > 1e3)
-                            //     memString = (mem / (int) 1e3) + "KB";
-                            // else
-                            //     memString = mem.ToString();
                             Console.Write("{0,-7}", memString);
                         }
 
@@ -125,7 +117,7 @@ namespace JanD
                     var client = new IpcClient();
                     var str = client.RequestString("new-process",
                         JsonSerializer.Serialize(new Daemon.JanDNewProcess(args[1],
-                            String.Join(' ', args[2..]))));
+                            String.Join(' ', args[2..]), Directory.GetCurrentDirectory())));
                     Console.WriteLine(str);
                     break;
                 }
