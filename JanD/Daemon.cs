@@ -259,8 +259,8 @@ namespace JanD
             public string Command { get; set; }
             public string WorkingDirectory { get; set; }
 
-            public JanDNewProcess(string name, string command, string dir) =>
-                (Name, Command, WorkingDirectory) = (name, command, dir);
+            public JanDNewProcess(string name, string command, string workingDirectory) =>
+                (Name, Command, WorkingDirectory) = (name, command, workingDirectory);
         }
     }
 
