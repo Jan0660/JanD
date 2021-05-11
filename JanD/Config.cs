@@ -32,10 +32,12 @@ namespace JanD
             Console.WriteLine(
                 Ansi.ForegroundColor($"Starting: Name: {proc.Name}; Command: {proc.Command}", 0, 247, 247));
             var process = new Process();
+            var index = proc.Command.IndexOf(' ');
+            var last = proc.Command.Length;
             var startInfo = new ProcessStartInfo
             {
-                FileName = proc.Command[..(proc.Command.IndexOf(' '))],
-                Arguments = proc.Command[(proc.Command.IndexOf(' ') + 1)..],
+                FileName = proc.Command[..(index == -1 ? last : index)],
+                Arguments = proc.Command[(index == -1 ? last : (proc.Command.IndexOf(' ') + 1))..],
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 RedirectStandardInput = false,

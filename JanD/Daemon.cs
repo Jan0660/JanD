@@ -158,6 +158,7 @@ namespace JanD
                                     {
                                         Name = def.Name,
                                         Command = def.Command,
+                                        WorkingDirectory = def.WorkingDirectory,
                                         AutoRestart = true,
                                         Enabled = false
                                     };
@@ -183,7 +184,6 @@ namespace JanD
                                 }
                                 case "save-config":
                                 {
-                                    var stream = File.OpenRead("./config.json");
                                     config.Processes = Processes.ToArray();
                                     var json = JsonSerializer.Serialize(config);
                                     File.WriteAllText("./config.json", json);
