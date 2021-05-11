@@ -136,10 +136,8 @@ namespace JanD
                                 {
                                     var proc = GetProcess(packet.Data);
 
-                                    proc.Stopped = true;
-                                    proc.Process.Kill();
-                                    proc.Process.Dispose();
-                                    proc.Process = null;
+                                    if (proc.Process != null)
+                                        proc.Stop();
                                     proc.Start();
                                     proc.Stopped = false;
                                     pipeServer.Write(Encoding.UTF8.GetBytes("done"));
@@ -226,7 +224,7 @@ namespace JanD
                         }
                         catch (Exception exception)
                         {
-                            pipeServer.Write("ERR:" + exception.Message);
+                            pipeServer.Write("ERR:" + exception.Message + '\n' + exception.StackTrace);
                         }
 
                         PipeRead();

@@ -23,6 +23,7 @@ namespace JanD
         [JsonIgnore] public bool ShouldRestart => !Stopped && (AutoRestart | Enabled);
         [JsonIgnore] public bool Stopped { get; set; }
         [JsonIgnore] public int ExitCode { get; set; }
+        [JsonIgnore] public int RestartCount { get; set; }
 
         public void Start()
         {
@@ -54,15 +55,10 @@ namespace JanD
                     $"Exited: {proc.Name}; ExitCode: {process.ExitCode}; AutoRestart: {proc.AutoRestart}; ShouldRestart: {proc.ShouldRestart};",
                     0, 247,
                     247));
-                proc.ExitCode = process.ExitCode;
-                process.Dispose();
+                if (!Stopped)
+                    WasStopped();
                 if (proc.ShouldRestart)
                     proc.Start();
-                else
-                {
-                    proc.Process = null;
-                    process = null;
-                }
             };
             process.OutputDataReceived += (sender, eventArgs) =>
             {
@@ -110,6 +106,31 @@ namespace JanD
                     if (exc.Message != "An async read operation has already been started on the stream.")
                         throw;
                 }
+            }
+        }
+
+        /// <summary>
+        /// Performs cleanup operations for when the process has been stopped.
+        /// </summary>
+        public void WasStopped()
+        {
+            RestartCount++;
+            ExitCode = Process.ExitCode;
+            Process.Dispose();
+            Process = null;
+        }
+
+        public void Stop()
+        {
+            Stopped = true;
+            Process.Kill();
+            try
+            {
+                Process.WaitForExit();
+            }
+            finally
+            {
+                WasStopped();
             }
         }
     }

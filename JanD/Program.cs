@@ -64,26 +64,46 @@ namespace JanD
                     var processes = JsonSerializer.Deserialize<JanDRuntimeProcess[]>(json);
 
                     Console.Write("{0,-14}", "Name");
+                    Console.Write("{0,-5}", "↺");
                     Console.Write("{0,-10}", "PID");
-                    Console.Write("{0,-14}", "Mem");
+                    Console.Write("{0,-7}", "Mem");
+                    Console.Write("{0,-7}", "Uptime");
+                    Console.Write("{0,-12}", "Cmd");
                     Console.WriteLine();
                     foreach (var process in processes)
                     {
                         // var proc = Process.GetProcessById(process.ProcessId);
                         Console.Write("{0,-14}", process.Name);
-                        Console.Write("{0,-9}", process.ProcessId);
+                        Console.Write("{0,-5}",
+                            process.RestartCount.ToString().Length > 3
+                                ? process.RestartCount.ToString()[..3] + '-'
+                                : process.RestartCount.ToString());
+                        Console.Write("{0,-10}", process.ProcessId);
                         if (process.ProcessId != -1 && !process.Stopped)
                         {
+                            // Mem
                             var proc = Process.GetProcessById(process.ProcessId);
                             var mem = proc.WorkingSet64;
                             string memString = mem switch
                             {
-                                > (int)1e9 => (mem / (int) 1e9) + "GB",
-                                > (int)1e6 => (mem / (int) 1e6) + "MB",
-                                > (int)1e3 => (mem / (int) 1e3) + "KB",
+                                > (int) 1e9 => (mem / (int) 1e9) + "GB",
+                                > (int) 1e6 => (mem / (int) 1e6) + "MB",
+                                > (int) 1e3 => (mem / (int) 1e3) + "KB",
                                 _ => mem.ToString()
                             };
                             Console.Write("{0,-7}", memString);
+                            // Uptime
+                            var uptime = (DateTime.Now - proc.StartTime);
+                            string uptimeString = uptime.TotalSeconds switch
+                            {
+                                >= (86_400 * 2) => Math.Floor(uptime.TotalMinutes / 60 / 24) + "D",
+                                >= 3_600 => Math.Floor(uptime.TotalMinutes / 60) + "h",
+                                >= 60 => Math.Floor(uptime.TotalMinutes) + "m",
+                                _ => Math.Floor(uptime.TotalSeconds) + "s"
+                            };
+                            Console.Write("{0,-7}", uptimeString);
+                            // Cmd
+                            Console.Write("{0,-12}", proc.ProcessName);
                         }
 
                         Console.WriteLine();
@@ -157,7 +177,8 @@ namespace JanD
                 case "outlogs":
                 {
                     var status = new IpcClient().GetStatus();
-                    var lines = new StreamReader(Path.Combine(status.Directory, "logs/" + args[1] + "-out.log")).Tail(15);
+                    var lines =
+                        new StreamReader(Path.Combine(status.Directory, "logs/" + args[1] + "-out.log")).Tail(15);
                     foreach (var line in lines)
                         Console.WriteLine(line);
                     break;
@@ -165,7 +186,8 @@ namespace JanD
                 case "errlogs":
                 {
                     var status = new IpcClient().GetStatus();
-                    var lines = new StreamReader(Path.Combine(status.Directory, "logs/" + args[1] + "-err.log")).Tail(15);
+                    var lines =
+                        new StreamReader(Path.Combine(status.Directory, "logs/" + args[1] + "-err.log")).Tail(15);
                     foreach (var line in lines)
                         Console.WriteLine(line);
                     break;
@@ -222,6 +244,7 @@ namespace JanD
             public int ProcessId { get; set; }
             public bool Stopped { get; set; }
             public int ExitCode { get; set; }
+            public int RestartCount { get; set; }
         }
     }
 }

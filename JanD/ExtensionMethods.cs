@@ -20,6 +20,7 @@ namespace JanD
             }
             j.WriteBoolean("Stopped", proc.Stopped);
             j.WriteNumber("ExitCode", proc.ExitCode);
+            j.WriteNumber("RestartCount", proc.RestartCount);
         }
 
         /// <summary>

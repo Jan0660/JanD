@@ -35,7 +35,6 @@ namespace JanD
 
         public DaemonStatus GetStatus()
         {
-            // todo: RequestBytes method
             SendString("status", "");
             Span<byte> bytes = stackalloc byte[BufferSize];
             var count = Stream.Read(bytes);
