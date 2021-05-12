@@ -158,7 +158,7 @@ namespace JanD
                                 case "new-process":
                                 {
                                     var def = JsonSerializer.Deserialize<JanDNewProcess>(packet.Data);
-                                    if (Config.Processes.Any(p => p.Name == def.Name))
+                                    if (Processes.Any(p => p.Name == def.Name))
                                     {
                                         pipeServer.Write("ERR:already-exists");
                                         return;
