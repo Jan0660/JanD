@@ -13,6 +13,7 @@ namespace JanD
     {
         public static bool NotSaved = false;
         public static List<JanDProcess> Processes;
+        public static Config Config;
 
         public static async Task Start()
         {
@@ -20,12 +21,23 @@ namespace JanD
                 => Console.WriteLine(Ansi.ForegroundColor(str, 0, 247, 247));
 
             DaemonLog("Starting daemon in " + Directory.GetCurrentDirectory());
-            var json = File.ReadAllText("./config.json");
-            var config = JsonSerializer.Deserialize<Config>(json);
-            DaemonLog($"Starting with {config.Processes.Length} processes.");
+            try
+            {
+                var json = File.ReadAllText("./config.json");
+                Config = JsonSerializer.Deserialize<Config>(json);
+            }
+            catch
+            {
+                Config = new()
+                {
+                    Processes = new JanDProcess[0]
+                };
+            }
+
+            DaemonLog($"Starting with {Config.Processes.Length} processes.");
             if (!Directory.Exists("./logs"))
                 Directory.CreateDirectory("./logs");
-            foreach (var proc in config.Processes)
+            foreach (var proc in Config.Processes)
             {
                 if (proc.Enabled)
                     proc.Start();
@@ -146,7 +158,7 @@ namespace JanD
                                 case "new-process":
                                 {
                                     var def = JsonSerializer.Deserialize<JanDNewProcess>(packet.Data);
-                                    if (config.Processes.Any(p => p.Name == def.Name))
+                                    if (Config.Processes.Any(p => p.Name == def.Name))
                                     {
                                         pipeServer.Write("ERR:already-exists");
                                         return;
@@ -182,8 +194,8 @@ namespace JanD
                                 }
                                 case "save-config":
                                 {
-                                    config.Processes = Processes.ToArray();
-                                    var json = JsonSerializer.Serialize(config);
+                                    Config.Processes = Processes.ToArray();
+                                    var json = JsonSerializer.Serialize(Config);
                                     File.WriteAllText("./config.json", json);
                                     NotSaved = false;
                                     pipeServer.Write("done");
@@ -246,7 +258,7 @@ namespace JanD
                 }, new object());
             }
 
-            Processes = config.Processes.ToList();
+            Processes = Config.Processes.ToList();
             NewPipeServer();
             await Task.Delay(-1);
         }
