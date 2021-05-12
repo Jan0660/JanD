@@ -60,6 +60,7 @@ namespace JanD
                 {
                     var client = new IpcClient();
                     var json = client.RequestString("get-processes", "");
+                    var status = client.GetStatus();
                     // Console.WriteLine(json);
                     var processes = JsonSerializer.Deserialize<JanDRuntimeProcess[]>(json);
 
@@ -108,6 +109,8 @@ namespace JanD
 
                         Console.WriteLine();
                     }
+                    if(status.NotSaved)
+                        Console.WriteLine("Process list not saved, use the `save` command to save it.");
 
                     break;
                 }
