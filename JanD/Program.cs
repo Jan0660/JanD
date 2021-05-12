@@ -11,6 +11,8 @@ namespace JanD
     {
         public const string DefaultPipeName = "jand";
         public static string PipeName;
+        public const string TrueMark = "[38;2;0;255;0m√[0m";
+        public const string FalseMark = "[38;2;255;0;0mx[0m";
 
         static async Task Main(string[] args)
         {
@@ -64,6 +66,7 @@ namespace JanD
                     // Console.WriteLine(json);
                     var processes = JsonSerializer.Deserialize<JanDRuntimeProcess[]>(json);
 
+                    Console.Write("{0,-6}", "R|E|A");
                     Console.Write("{0,-14}", "Name");
                     Console.Write("{0,-5}", "↺");
                     Console.Write("{0,-10}", "PID");
@@ -73,7 +76,9 @@ namespace JanD
                     Console.WriteLine();
                     foreach (var process in processes)
                     {
-                        // var proc = Process.GetProcessById(process.ProcessId);
+                        Console.Write((process.Running ? TrueMark : FalseMark) + "|" +
+                                      (process.Enabled ? TrueMark : FalseMark) + "|"
+                                      + (process.AutoRestart ? TrueMark : FalseMark) + " ");
                         Console.Write("{0,-14}", process.Name);
                         Console.Write("{0,-5}",
                             process.RestartCount.ToString().Length > 3
@@ -109,7 +114,8 @@ namespace JanD
 
                         Console.WriteLine();
                     }
-                    if(status.NotSaved)
+
+                    if (status.NotSaved)
                         Console.WriteLine("Process list not saved, use the `save` command to save it.");
 
                     break;
@@ -248,6 +254,9 @@ namespace JanD
             public bool Stopped { get; set; }
             public int ExitCode { get; set; }
             public int RestartCount { get; set; }
+            public bool Enabled { get; set; }
+            public bool AutoRestart { get; set; }
+            public bool Running { get; set; }
         }
     }
 }
