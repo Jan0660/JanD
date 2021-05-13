@@ -21,7 +21,7 @@ namespace JanD
             Console.WriteLine($"JanD v{ThisAssembly.Info.Version}");
             if (args.Length == 0)
             {
-                Console.WriteLine("No argument given.");
+                Console.WriteLine("No argument given. For a list of commands see the `help` command.");
                 return;
             }
 
@@ -217,6 +217,8 @@ namespace JanD
                     break;
                 }
                 case "help":
+                case "-help":
+                case "--help":
                 {
                     var assembly = System.Reflection.Assembly.GetExecutingAssembly();
                     var resourceName = "JanD.help.txt";
@@ -227,10 +229,11 @@ namespace JanD
                         string result = reader.ReadToEnd();
                         Console.WriteLine(result);
                     }
+
                     break;
                 }
                 default:
-                    Console.WriteLine("Unknown command.");
+                    Console.WriteLine("Unknown command. For a list of commands see the `help` command.");
                     return;
             }
         }
