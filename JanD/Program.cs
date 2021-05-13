@@ -24,6 +24,12 @@ namespace JanD
                 return;
             }
 
+            void ProcessRelativePath()
+            {
+                if (args[2].StartsWith('.'))
+                    args[2] = Path.GetFullPath(args[2]);
+            }
+
             switch (args[0].ToLower())
             {
                 case "start":
@@ -37,6 +43,7 @@ namespace JanD
                     else if (args.Length > 2)
                     {
                         var client = new IpcClient();
+                        ProcessRelativePath();
                         var str = client.RequestString("new-process",
                             JsonSerializer.Serialize(new Daemon.JanDNewProcess(args[1],
                                 String.Join(' ', args[2..]), Directory.GetCurrentDirectory())));
@@ -143,6 +150,7 @@ namespace JanD
                 case "new":
                 {
                     var client = new IpcClient();
+                    ProcessRelativePath();
                     var str = client.RequestString("new-process",
                         JsonSerializer.Serialize(new Daemon.JanDNewProcess(args[1],
                             String.Join(' ', args[2..]), Directory.GetCurrentDirectory())));
