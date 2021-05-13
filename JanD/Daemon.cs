@@ -42,8 +42,15 @@ namespace JanD
                 Directory.CreateDirectory("./logs");
             foreach (var proc in Config.Processes)
             {
-                if (proc.Enabled)
-                    proc.Start();
+                try
+                {
+                    if (proc.Enabled)
+                        proc.Start();
+                }
+                catch (Exception exc)
+                {
+                    Console.WriteLine($"Starting {proc.Name} failed: {exc.Message}");
+                }
             }
 
             JanDProcess GetProcess(string name, bool throwOnNotFound = true)
