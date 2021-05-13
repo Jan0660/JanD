@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace JanD
@@ -14,6 +16,7 @@ namespace JanD
         public static bool NotSaved = false;
         public static List<JanDProcess> Processes;
         public static Config Config;
+        public static CancellationTokenSource CancellationTokenSource = new();
 
         public static async Task Start()
         {
@@ -86,7 +89,7 @@ namespace JanD
                                     Console.WriteLine(packet.Data);
                                     break;
                                 case "exit":
-                                    Environment.Exit(0);
+                                    CancellationTokenSource.Cancel();
                                     break;
                                 case "status":
                                 {
@@ -136,9 +139,7 @@ namespace JanD
                                     }
                                     else
                                     {
-                                        NotSaved = true;
-                                        proc.Stopped = true;
-                                        proc.Process.Kill();
+                                        proc.Stop();
                                         pipeServer.Write("killed");
                                     }
 
@@ -260,7 +261,16 @@ namespace JanD
 
             Processes = Config.Processes.ToList();
             NewPipeServer();
-            await Task.Delay(-1);
+            try
+            {
+                await Task.Delay(-1, CancellationTokenSource.Token);
+            }
+            finally
+            {
+                Console.WriteLine("Exit requested. Killing all processes.");
+                foreach(var process in Processes)
+                    process?.Process?.Kill(true);
+            }
         }
 
         public class JanDNewProcess
