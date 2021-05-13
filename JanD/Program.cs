@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Resources;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -213,6 +214,19 @@ namespace JanD
                     var client = new IpcClient();
                     var str = client.RequestString("delete-process", args[1]);
                     Console.WriteLine(str);
+                    break;
+                }
+                case "help":
+                {
+                    var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+                    var resourceName = "JanD.help.txt";
+
+                    using (Stream stream = assembly.GetManifestResourceStream(resourceName))
+                    using (StreamReader reader = new StreamReader(stream))
+                    {
+                        string result = reader.ReadToEnd();
+                        Console.WriteLine(result);
+                    }
                     break;
                 }
                 default:

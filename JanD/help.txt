@@ -1,0 +1,17 @@
+Commands:
+    start <name> <executable> <args[]>       Create a new process and start it.
+    new <name> <executable> <args[]>         Create a new process.
+    enable <name>                            Enable a process to start when JanD starts.
+    disable <name>                           Disable a process from starting when JanD starts.
+    list, ls, l                              List current processes.
+    stop <name>                              Stop a process.
+    restart <name>                           Restart a process.
+    info <name>                              (UNFINISHED) Get info about a process.
+    kill                                     Stop all processes (and their children) and then kill JanD.
+    save                                     Save JanD processes and configuration.
+    start-daemon                             The command used for starting the daemon.
+    status <name>                            (UNFINISHED) Get status for a process.
+    outlogs <name>                           View the last 15 lines of stdout logs for a process.
+    errlogs <name>                           View the last 15 lines of stderr logs for a process.
+    delete <name>                            Delete a process.
+    help                                     Show this text.

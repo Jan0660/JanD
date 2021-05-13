@@ -29,5 +29,6 @@
     </ItemGroup>
     <ItemGroup>
         <RdXmlFile Include="rd.xml" />
+        <EmbeddedResource Include="help.txt"/>
     </ItemGroup>
 </Project>
