@@ -63,7 +63,6 @@ namespace JanD
                     var client = new IpcClient();
                     var json = client.RequestString("get-processes", "");
                     var status = client.GetStatus();
-                    // Console.WriteLine(json);
                     var processes = JsonSerializer.Deserialize<JanDRuntimeProcess[]>(json);
 
                     Console.Write("{0,-6}", "R|E|A");
