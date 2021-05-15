@@ -1,0 +1,17 @@
+[Unit]
+Description=The Jan process manager
+Documentation=https://github.com/Jan0660/JanD
+
+[Service]
+Type=simple
+User={0}
+Environment=PATH={1}
+Environment=JAND_HOME={2}
+Environment=JAND_PIPE={3}
+Restart=on-failure
+
+ExecStart={4} start-daemon
+ExecStop={4} kill
+
+[Install]
+WantedBy=multi-user.target

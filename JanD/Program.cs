@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Resources;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,6 +12,9 @@ namespace JanD
 {
     public static class Program
     {
+        [DllImport("libc")]
+        public static extern uint getuid();
+
         public const string DefaultPipeName = "jand";
         public static string PipeName;
         public const string TrueMark = "[38;2;0;255;0m√[0m";
@@ -19,6 +23,13 @@ namespace JanD
         static async Task Main(string[] args)
         {
             PipeName = Environment.GetEnvironmentVariable("JAND_PIPE") ?? DefaultPipeName;
+            var home = Environment.GetEnvironmentVariable("JAND_HOME");
+            if (home != null)
+            {
+                if (!Directory.Exists(home))
+                    Directory.CreateDirectory(home);
+                Directory.SetCurrentDirectory(home);
+            }
             Console.WriteLine($"JanD v{ThisAssembly.Info.Version}");
             if (args.Length == 0)
             {
@@ -213,21 +224,23 @@ namespace JanD
                         foreach (var line in lines)
                             Console.WriteLine(line);
                     }
-                    if(events.HasFlag(Daemon.DaemonEvents.OutLog))
+
+                    if (events.HasFlag(Daemon.DaemonEvents.OutLog))
                         TailLog("out");
-                    if(events.HasFlag(Daemon.DaemonEvents.ErrLog))
+                    if (events.HasFlag(Daemon.DaemonEvents.ErrLog))
                         TailLog("err");
                     Console.WriteLine();
                     if (OperatingSystem.IsWindows())
                     {
-                        Console.WriteLine("Woops, watching logs is not available on W*ndows because of cringeness issues with IPC.");
+                        Console.WriteLine(
+                            "Woops, watching logs is not available on W*ndows because of cringeness issues with IPC.");
                         return;
                     }
 
-                    client.RequestString("subscribe-events", ((int)events).ToString());
-                    if(events.HasFlag(Daemon.DaemonEvents.OutLog))
+                    client.RequestString("subscribe-events", ((int) events).ToString());
+                    if (events.HasFlag(Daemon.DaemonEvents.OutLog))
                         client.RequestString("subscribe-outlog-event", args[1]);
-                    if(events.HasFlag(Daemon.DaemonEvents.ErrLog))
+                    if (events.HasFlag(Daemon.DaemonEvents.ErrLog))
                         client.RequestString("subscribe-errlog-event", args[1]);
                     LogWatch(client);
 
@@ -240,19 +253,33 @@ namespace JanD
                     Console.WriteLine(str);
                     break;
                 }
+                case "startup":
+                {
+                    if (getuid() != 0)
+                    {
+                        Console.WriteLine("Run the following command as root to install the SystemD service file:");
+                        Console.WriteLine(
+                            $"{Environment.GetCommandLineArgs()[0]} startup {Environment.UserName} {Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".jand")}");
+                    }
+                    else
+                    {
+                        var service = GetResourceString("systemd-template.service");
+                        service = String.Format(service, args[1], Environment.GetEnvironmentVariable("PATH"), args[2],
+                            PipeName, Process.GetCurrentProcess().MainModule?.FileName ?? "jand");
+                        var location = "/etc/systemd/system/jand-" + args[1] + ".service";
+                        File.WriteAllText(location, service);
+                        Console.WriteLine($"SystemD service file installed in {location}");
+                        Console.WriteLine("Enable and start the service using the following command:");
+                        Console.WriteLine($"systemctl enable --now jand-{args[1]}");
+                    }
+
+                    break;
+                }
                 case "help":
                 case "-help":
                 case "--help":
                 {
-                    var assembly = System.Reflection.Assembly.GetExecutingAssembly();
-                    var resourceName = "JanD.help.txt";
-
-                    using (Stream stream = assembly.GetManifestResourceStream(resourceName))
-                    using (StreamReader reader = new StreamReader(stream))
-                    {
-                        string result = reader.ReadToEnd();
-                        Console.WriteLine(result);
-                    }
+                    Console.WriteLine(GetResourceString("help.txt"));
 
                     break;
                 }
@@ -271,6 +298,17 @@ namespace JanD
                 var count = client.Stream.Read(bytes, 0, bytes.Length);
                 var ev = JsonSerializer.Deserialize<IpcClient.DaemonClientEvent>(bytes[..count]);
                 Console.Write(ev!.Value);
+            }
+        }
+
+        public static string GetResourceString(string name)
+        {
+            var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+
+            using (Stream stream = assembly.GetManifestResourceStream("JanD." + name))
+            using (StreamReader reader = new StreamReader(stream))
+            {
+                return reader.ReadToEnd();
             }
         }
 

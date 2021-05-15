@@ -15,4 +15,5 @@ Commands:
     outlogs <name>                           View the last 15 lines of stdout logs for a process and watch for new stdout logs.
     errlogs <name>                           View the last 15 lines of stderr logs for a process and watch for new stderr logs.
     delete <name>                            Delete a process.
+    startup                                  Generate a SystemD service file.
     help                                     Show this text.

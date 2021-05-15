@@ -4,7 +4,7 @@
         <OutputType>Exe</OutputType>
         <TargetFramework>net5.0</TargetFramework>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <AssemblyVersion>0.2.0</AssemblyVersion>
+        <AssemblyVersion>0.2.1</AssemblyVersion>
         <InvariantGlobalization>true</InvariantGlobalization>
         
         <IlcOptimizationPreference>Speed</IlcOptimizationPreference>
@@ -29,6 +29,7 @@
     </ItemGroup>
     <ItemGroup>
         <RdXmlFile Include="rd.xml" />
-        <EmbeddedResource Include="help.txt"/>
+        <EmbeddedResource Include="help.txt" />
+        <EmbeddedResource Include="systemd-template.service" />
     </ItemGroup>
 </Project>
