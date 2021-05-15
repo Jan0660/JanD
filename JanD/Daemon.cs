@@ -104,7 +104,7 @@ namespace JanD
                                     Console.WriteLine(packet.Data);
                                     break;
                                 case "exit":
-                                    CancellationTokenSource.Cancel();
+                                    Environment.Exit(0);
                                     break;
                                 case "status":
                                 {
