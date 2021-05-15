@@ -255,6 +255,11 @@ namespace JanD
                 }
                 case "startup":
                 {
+                    if (!OperatingSystem.IsLinux())
+                    {
+                        Console.WriteLine("SystemD startup services are only available on Linux with SystemD.");
+                        return;
+                    }
                     if (getuid() != 0)
                     {
                         Console.WriteLine("Run the following command as root to install the SystemD service file:");
