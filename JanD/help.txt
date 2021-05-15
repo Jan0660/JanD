@@ -11,7 +11,8 @@ Commands:
     save                                     Save JanD processes and configuration.
     start-daemon                             The command used for starting the daemon.
     status <name>                            (UNFINISHED) Get status for a process.
-    outlogs <name>                           View the last 15 lines of stdout logs for a process.
-    errlogs <name>                           View the last 15 lines of stderr logs for a process.
+    logs <name>                              View the last 15 lines of stdout and stderr logs for a process and watch for new logs.
+    outlogs <name>                           View the last 15 lines of stdout logs for a process and watch for new stdout logs.
+    errlogs <name>                           View the last 15 lines of stderr logs for a process and watch for new stderr logs.
     delete <name>                            Delete a process.
     help                                     Show this text.
