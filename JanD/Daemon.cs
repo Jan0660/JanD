@@ -17,6 +17,7 @@ namespace JanD
         public static List<JanDProcess> Processes;
         public static Config Config;
         public static CancellationTokenSource CancellationTokenSource = new();
+        public static List<DaemonConnection> Connections = new();
 
         public static async Task Start()
         {
@@ -73,6 +74,8 @@ namespace JanD
                 pipeServer.BeginWaitForConnection(state =>
                 {
                     DaemonLog("IPC CONNECTION h!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                    var connection = new DaemonConnection(pipeServer);
+                    Connections.Add(connection);
                     var bytes = new byte[10000];
                     AsyncCallback callback = null;
                     callback = state =>
@@ -82,6 +85,7 @@ namespace JanD
                         {
                             Console.WriteLine("Read returned zero bytes, disconnecting connection.");
                             pipeServer.Disconnect();
+                            Connections.Remove(connection);
                             pipeServer.Dispose();
                             return;
                         }
@@ -92,6 +96,10 @@ namespace JanD
                             var packet = JsonSerializer.Deserialize<IpcPacket>(bytes.AsSpan()[..count]);
                             switch (packet.Type)
                             {
+                                case "ping":
+                                    Console.WriteLine("ping");
+                                    pipeServer.Write("pong");
+                                    break;
                                 case "write":
                                     Console.WriteLine(packet.Data);
                                     break;
@@ -240,6 +248,25 @@ namespace JanD
                                     pipeServer.Write("done");
                                     break;
                                 }
+                                case "subscribe-events":
+                                {
+                                    connection.Events =
+                                        (DaemonEvents) ((int) connection.Events | int.Parse(packet.Data));
+                                    pipeServer.Write("done");
+                                    break;
+                                }
+                                case "subscribe-outlog-event":
+                                {
+                                    connection.OutLogSubs.Add(packet.Data);
+                                    pipeServer.Write("done");
+                                    break;
+                                }
+                                case "subscribe-errlog-event":
+                                {
+                                    connection.ErrLogSubs.Add(packet.Data);
+                                    pipeServer.Write("done");
+                                    break;
+                                }
                             }
                         }
                         catch (Exception exception)
@@ -254,6 +281,8 @@ namespace JanD
                     {
                         if (!pipeServer.IsConnected)
                         {
+                            Connections.Remove(connection);
+                            pipeServer.Dispose();
                             Console.WriteLine("IPC disconnected.");
                             return;
                         }
@@ -275,7 +304,7 @@ namespace JanD
             finally
             {
                 Console.WriteLine("Exit requested. Killing all processes.");
-                foreach(var process in Processes)
+                foreach (var process in Processes)
                     process?.Process?.Kill(true);
             }
         }
@@ -288,6 +317,29 @@ namespace JanD
 
             public JanDNewProcess(string name, string command, string workingDirectory) =>
                 (Name, Command, WorkingDirectory) = (name, command, workingDirectory);
+        }
+
+        public class DaemonConnection
+        {
+            public NamedPipeServerStream Stream;
+            public DaemonEvents Events;
+            public List<string> OutLogSubs;
+            public List<string> ErrLogSubs;
+
+            public DaemonConnection(NamedPipeServerStream stream)
+            {
+                Stream = stream;
+                Events = 0;
+                OutLogSubs = new();
+                ErrLogSubs = new();
+            }
+        }
+
+        [Flags]
+        public enum DaemonEvents
+        {
+            OutLog = 0b0000_0001,
+            ErrLog = 0b0000_0010
         }
     }
 

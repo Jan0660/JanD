@@ -43,5 +43,12 @@ namespace JanD
 
         public void Write(string str)
             => SendString("write", str);
+
+        public class DaemonClientEvent
+        {
+            public string Event { get; set; }
+            public string Process { get; set; }
+            public string Value { get; set; }
+        }
     }
 }

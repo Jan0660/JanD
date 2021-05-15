@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Resources;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace JanD
@@ -189,24 +190,47 @@ namespace JanD
                     break;
                 }
                 case "logs":
-                    Console.WriteLine("Use `outlogs` or `errlogs`.");
-                    break;
+                case "errlogs":
                 case "outlogs":
                 {
-                    var status = new IpcClient().GetStatus();
-                    var lines =
-                        new StreamReader(Path.Combine(status.Directory, "logs/" + args[1] + "-out.log")).Tail(15);
-                    foreach (var line in lines)
-                        Console.WriteLine(line);
-                    break;
-                }
-                case "errlogs":
-                {
-                    var status = new IpcClient().GetStatus();
-                    var lines =
-                        new StreamReader(Path.Combine(status.Directory, "logs/" + args[1] + "-err.log")).Tail(15);
-                    foreach (var line in lines)
-                        Console.WriteLine(line);
+                    var events = args[0].ToLower() switch
+                    {
+                        "logs" => Daemon.DaemonEvents.ErrLog | Daemon.DaemonEvents.OutLog,
+                        "outlogs" => Daemon.DaemonEvents.OutLog,
+                        "errlogs" => Daemon.DaemonEvents.ErrLog,
+                    };
+                    var client = new IpcClient();
+                    var status = client.GetStatus();
+
+                    void TailLog(string whichStd, int lineCount = 15)
+                    {
+                        Console.WriteLine($"Getting last 15 lines of std{whichStd} logs...");
+                        var fs = new FileStream(Path.Combine(status.Directory, "logs/" + args[1] + $"-{whichStd}.log"),
+                            FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                        var reader = new StreamReader(fs);
+                        var lines = reader.Tail(lineCount);
+                        reader.Close();
+                        foreach (var line in lines)
+                            Console.WriteLine(line);
+                    }
+                    if(events.HasFlag(Daemon.DaemonEvents.OutLog))
+                        TailLog("out");
+                    if(events.HasFlag(Daemon.DaemonEvents.ErrLog))
+                        TailLog("err");
+                    Console.WriteLine();
+                    if (OperatingSystem.IsWindows())
+                    {
+                        Console.WriteLine("Woops, watching logs is not available on W*ndows because of cringeness issues with IPC.");
+                        return;
+                    }
+
+                    client.RequestString("subscribe-events", ((int)events).ToString());
+                    if(events.HasFlag(Daemon.DaemonEvents.OutLog))
+                        client.RequestString("subscribe-outlog-event", args[1]);
+                    if(events.HasFlag(Daemon.DaemonEvents.ErrLog))
+                        client.RequestString("subscribe-errlog-event", args[1]);
+                    LogWatch(client);
+
                     break;
                 }
                 case "delete":
@@ -235,6 +259,18 @@ namespace JanD
                 default:
                     Console.WriteLine("Unknown command. For a list of commands see the `help` command.");
                     return;
+            }
+        }
+
+        public static void LogWatch(IpcClient client)
+        {
+            byte[] bytes = new byte[100_000];
+            AsyncCallback callback = null;
+            while (true)
+            {
+                var count = client.Stream.Read(bytes, 0, bytes.Length);
+                var ev = JsonSerializer.Deserialize<IpcClient.DaemonClientEvent>(bytes[..count]);
+                Console.Write(ev!.Value);
             }
         }
 

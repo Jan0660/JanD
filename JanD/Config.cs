@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace JanD
@@ -24,6 +26,8 @@ namespace JanD
         [JsonIgnore] public bool Stopped { get; set; }
         [JsonIgnore] public int ExitCode { get; set; }
         [JsonIgnore] public int RestartCount { get; set; }
+        [JsonIgnore] public StreamWriter OutWriter { get; set; }
+        [JsonIgnore] public StreamWriter ErrWriter { get; set; }
 
         public void Start()
         {
@@ -32,6 +36,8 @@ namespace JanD
                 return;
             Console.WriteLine(
                 Ansi.ForegroundColor($"Starting: Name: {proc.Name}; Command: {proc.Command}", 0, 247, 247));
+            OutWriter ??= new StreamWriter(Path.Combine("./logs/") + proc.Name + "-out.log", true);
+            ErrWriter ??= new StreamWriter(Path.Combine("./logs/") + proc.Name + "-err.log", true);
             var process = new Process();
             var index = proc.Command.IndexOf(' ');
             var last = proc.Command.Length;
@@ -60,29 +66,36 @@ namespace JanD
                 if (proc.ShouldRestart)
                     proc.Start();
             };
-            process.OutputDataReceived += (sender, eventArgs) =>
+
+            void Log(string whichStd, DataReceivedEventArgs eventArgs)
             {
                 if (eventArgs.Data == null)
                     return;
-                // todo: unbloat
-                var str = Ansi.ForegroundColor(proc.Name + " OUT| ", 0, 255, 0) + eventArgs.Data + '\n';
-                var writer = new StreamWriter(Path.Combine("./logs/") + proc.Name + "-out.log", true);
-                writer.Write(str);
-                writer.Close();
-                writer.Dispose();
+                var str = Ansi.ForegroundColor($"{proc.Name} {whichStd}| ", 0, 255, 0) + eventArgs.Data +
+                          '\n';
+                if (whichStd == "out")
+                    OutWriter.Write(str);
+                if (whichStd == "err")
+                    ErrWriter.Write(str);
                 Console.Write(str);
-            };
-            process.ErrorDataReceived += (sender, eventArgs) =>
-            {
-                if (eventArgs.Data == null)
-                    return;
-                var str = Ansi.ForegroundColor(proc.Name + " ERR| ", 255, 0, 0) + eventArgs.Data + '\n';
-                var writer = new StreamWriter(Path.Combine("./logs/") + proc.Name + "-err.log", true);
-                writer.Write(str);
-                writer.Close();
-                writer.Dispose();
-                Console.Write(str);
-            };
+                foreach (var con in Daemon.Connections.Where(c =>
+                    c.Events.HasFlag((whichStd == "out" ? Daemon.DaemonEvents.OutLog : Daemon.DaemonEvents.ErrLog))))
+                {
+                    if ((whichStd == "out" ? con.OutLogSubs.Contains(proc.Name) : con.ErrLogSubs.Contains(proc.Name)))
+                    {
+                        var json = new Utf8JsonWriter(con.Stream);
+                        json.WriteStartObject();
+                        json.WriteString("Event", whichStd + "log");
+                        json.WriteString("Process", proc.Name);
+                        json.WriteString("Value", str);
+                        json.WriteEndObject();
+                        json.Flush();
+                    }
+                }
+            }
+
+            process.OutputDataReceived += (_, eventArgs) => Log("out", eventArgs);
+            process.ErrorDataReceived += (_, eventArgs) => Log("err", eventArgs);
             process.Start();
             proc.Process = process;
             process.BeginOutputReadLine();
