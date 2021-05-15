@@ -25,6 +25,7 @@ namespace JanD
                 => Console.WriteLine(Ansi.ForegroundColor(str, 0, 247, 247));
 
             DaemonLog("Starting daemon in " + Directory.GetCurrentDirectory());
+            DaemonLog($"With PIPE_NAME: {Program.PipeName}");
             try
             {
                 var json = File.ReadAllText("./config.json");
