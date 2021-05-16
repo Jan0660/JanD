@@ -140,12 +140,7 @@ namespace JanD
                         Console.WriteLine();
                     }
 
-                    if (status.NotSaved)
-                    {
-                        Console.ForegroundColor = ConsoleColor.DarkRed;
-                        Console.WriteLine("Process list not saved, use the `save` command to save it.");
-                        Console.ResetColor();
-                    }
+                    NotSavedCheck(status);
 
                     break;
                 }
@@ -168,26 +163,6 @@ namespace JanD
                     var client = new IpcClient();
                     var proc = JsonSerializer.Deserialize<JanDRuntimeProcess>(client.RequestString("get-process-info", args[1]));
 
-                    void Info(string name, string value)
-                    {
-                        Console.ForegroundColor = ConsoleColor.Cyan;
-                        Console.Write(name);
-                        Console.ResetColor();
-                        Console.WriteLine(": " + value);
-                    }
-                    void InfoBool(string name, bool value)
-                    {
-                        Console.ForegroundColor = ConsoleColor.Cyan;
-                        Console.Write(name);
-                        Console.ResetColor();
-                        Console.Write(": ");
-                        if (value)
-                            Console.ForegroundColor = ConsoleColor.Green;
-                        else
-                            Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine((value ? "true" : "false"));
-                        Console.ResetColor();
-                    }
                     Console.WriteLine(proc.Name);
                     Info("Command", proc.Command);
                     Info("WorkingDirectory", proc.WorkingDirectory);
@@ -236,8 +211,10 @@ namespace JanD
                 case "status":
                 {
                     var client = new IpcClient();
-                    var str = client.RequestString("status", "");
-                    Console.WriteLine(str);
+                    var status = client.GetStatus();
+                    Info("Directory", status.Directory);
+                    Info("Processes", status.Processes.ToString());
+                    NotSavedCheck(status);
                     break;
                 }
                 case "logs":
@@ -340,6 +317,36 @@ namespace JanD
             }
         }
 
+        public static void Info(string name, string value)
+        {
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.Write(name);
+            Console.ResetColor();
+            Console.WriteLine(": " + value);
+        }
+        public static void InfoBool(string name, bool value)
+        {
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.Write(name);
+            Console.ResetColor();
+            Console.Write(": ");
+            if (value)
+                Console.ForegroundColor = ConsoleColor.Green;
+            else
+                Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine((value ? "true" : "false"));
+            Console.ResetColor();
+        }
+
+        public static void NotSavedCheck(DaemonStatus status)
+        {
+            if (status.NotSaved)
+            {
+                Console.ForegroundColor = ConsoleColor.DarkRed;
+                Console.WriteLine("Process list not saved, use the `save` command to save it.");
+                Console.ResetColor();
+            }
+        }
         public static void LogWatch(IpcClient client)
         {
             byte[] bytes = new byte[100_000];
