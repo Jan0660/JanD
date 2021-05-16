@@ -10,6 +10,8 @@ namespace JanD
         public static void WriteProcessInfo(this Utf8JsonWriter j, JanDProcess proc)
         {
             j.WriteString("Name", proc.Name);
+            j.WriteString("Command", proc.Command);
+            j.WriteString("WorkingDirectory", proc.WorkingDirectory);
             try
             {
                 j.WriteNumber("ProcessId", proc.Process?.Id ?? -1);

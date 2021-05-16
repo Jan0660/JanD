@@ -166,8 +166,38 @@ namespace JanD
                 case "info":
                 {
                     var client = new IpcClient();
-                    var str = client.RequestString("get-process-info", args[1]);
-                    Console.WriteLine(str);
+                    var proc = JsonSerializer.Deserialize<JanDRuntimeProcess>(client.RequestString("get-process-info", args[1]));
+
+                    void Info(string name, string value)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Cyan;
+                        Console.Write(name);
+                        Console.ResetColor();
+                        Console.WriteLine(": " + value);
+                    }
+                    void InfoBool(string name, bool value)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Cyan;
+                        Console.Write(name);
+                        Console.ResetColor();
+                        Console.Write(": ");
+                        if (value)
+                            Console.ForegroundColor = ConsoleColor.Green;
+                        else
+                            Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine((value ? "true" : "false"));
+                        Console.ResetColor();
+                    }
+                    Console.WriteLine(proc.Name);
+                    Info("Command", proc.Command);
+                    Info("WorkingDirectory", proc.WorkingDirectory);
+                    Info("PID", proc.ProcessId.ToString());
+                    Info("ExitCode", proc.ExitCode.ToString());
+                    Info("RestartCount", proc.RestartCount.ToString());
+                    InfoBool("Stopped", proc.Stopped);
+                    InfoBool("Enabled", proc.Enabled);
+                    InfoBool("AutoRestart", proc.AutoRestart);
+                    InfoBool("Running", proc.Running);
                     break;
                 }
                 case "new":
@@ -369,6 +399,8 @@ namespace JanD
         public class JanDRuntimeProcess
         {
             public string Name { get; set; }
+            public string Command { get; set; }
+            public string WorkingDirectory { get; set; }
             public int ProcessId { get; set; }
             public bool Stopped { get; set; }
             public int ExitCode { get; set; }
