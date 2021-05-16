@@ -99,11 +99,14 @@ namespace JanD
                                       (process.Enabled ? TrueMark : FalseMark) + "|"
                                       + (process.AutoRestart ? TrueMark : FalseMark) + " ");
                         Console.Write("{0,-14}", process.Name);
+                        Console.ForegroundColor = ConsoleColor.DarkGray;
                         Console.Write("{0,-5}",
                             process.RestartCount.ToString().Length > 3
                                 ? process.RestartCount.ToString()[..3] + '-'
                                 : process.RestartCount.ToString());
+                        Console.ForegroundColor = ConsoleColor.DarkMagenta;
                         Console.Write("{0,-10}", process.ProcessId);
+                        Console.ResetColor();
                         if (process.ProcessId != -1 && !process.Stopped)
                         {
                             // Mem
@@ -126,16 +129,23 @@ namespace JanD
                                 >= 60 => Math.Floor(uptime.TotalMinutes) + "m",
                                 _ => Math.Floor(uptime.TotalSeconds) + "s"
                             };
+                            Console.ForegroundColor = ConsoleColor.DarkGray;
                             Console.Write("{0,-7}", uptimeString);
                             // Cmd
+                            Console.ForegroundColor = ConsoleColor.DarkGreen;
                             Console.Write("{0,-12}", proc.ProcessName);
+                            Console.ResetColor();
                         }
 
                         Console.WriteLine();
                     }
 
                     if (status.NotSaved)
+                    {
+                        Console.ForegroundColor = ConsoleColor.DarkRed;
                         Console.WriteLine("Process list not saved, use the `save` command to save it.");
+                        Console.ResetColor();
+                    }
 
                     break;
                 }
