@@ -268,6 +268,15 @@ namespace JanD
                                     pipeServer.Write("done");
                                     break;
                                 }
+                                case "flush-all-logs":
+                                    foreach (var proc in Processes)
+                                    {
+                                        proc.OutWriter?.Flush();
+                                        proc.ErrWriter?.Flush();
+                                    }
+
+                                    pipeServer.Write("done");
+                                    break;
                             }
                         }
                         catch (Exception exception)

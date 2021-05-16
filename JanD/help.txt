@@ -16,4 +16,5 @@ Commands:
     errlogs <name>                           View the last 15 lines of stderr logs for a process and watch for new stderr logs.
     delete <name>                            Delete a process.
     startup                                  Generate a SystemD service file.
+    flush                                    Ensure all logs are written to disk.
     help                                     Show this text.

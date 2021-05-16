@@ -288,6 +288,12 @@ namespace JanD
 
                     break;
                 }
+                case "flush":
+                {
+                    var client = new IpcClient();
+                    Console.WriteLine(client.RequestString("flush-all-logs", ""));
+                    break;
+                }
                 default:
                     Console.WriteLine("Unknown command. For a list of commands see the `help` command.");
                     return;
