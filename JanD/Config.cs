@@ -71,7 +71,8 @@ namespace JanD
             {
                 if (eventArgs.Data == null)
                     return;
-                var str = Ansi.ForegroundColor($"{proc.Name} {whichStd}| ", 0, 255, 0) + eventArgs.Data +
+                var str = Ansi.ForegroundColor($"{proc.Name} {whichStd}| ", (byte) (whichStd == "err" ? 255 : 0),
+                              (byte) (whichStd == "out" ? 255 : 0), 0) + eventArgs.Data +
                           '\n';
                 if (whichStd == "out")
                     OutWriter.Write(str);
