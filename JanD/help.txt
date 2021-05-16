@@ -6,11 +6,11 @@ Commands:
     list, ls, l                              List current processes.
     stop <name>                              Stop a process.
     restart <name>                           Restart a process.
-    info <name>                              (UNFINISHED) Get info about a process.
+    info <name>                              Get info about a process.
     kill                                     Stop all processes (and their children) and then kill JanD.
     save                                     Save JanD processes and configuration.
     start-daemon                             The command used for starting the daemon.
-    status <name>                            (UNFINISHED) Get status for a process.
+    status <name>                            Get daemon status.
     logs <name>                              View the last 15 lines of stdout and stderr logs for a process and watch for new logs.
     outlogs <name>                           View the last 15 lines of stdout logs for a process and watch for new stdout logs.
     errlogs <name>                           View the last 15 lines of stderr logs for a process and watch for new stderr logs.

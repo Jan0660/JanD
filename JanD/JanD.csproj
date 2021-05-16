@@ -4,7 +4,7 @@
         <OutputType>Exe</OutputType>
         <TargetFramework>net5.0</TargetFramework>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <AssemblyVersion>0.2.2</AssemblyVersion>
+        <AssemblyVersion>0.3.0</AssemblyVersion>
         <InvariantGlobalization>true</InvariantGlobalization>
         
         <IlcOptimizationPreference>Speed</IlcOptimizationPreference>
