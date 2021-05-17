@@ -2,6 +2,7 @@
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
+using DaemonEvents = JanD.Daemon.DaemonEvents;
 
 namespace JanD
 {
@@ -20,6 +21,7 @@ namespace JanD
             {
                 j.WriteNumber("ProcessId", -1);
             }
+
             j.WriteBoolean("Stopped", proc.Stopped);
             j.WriteNumber("ExitCode", proc.ExitCode);
             j.WriteNumber("RestartCount", proc.RestartCount);
@@ -35,5 +37,16 @@ namespace JanD
         /// <param name="str"></param>
         public static void Write(this NamedPipeServerStream pipeServer, string str)
             => pipeServer.Write(Encoding.UTF8.GetBytes(str));
+
+        public static string ToIpcString(this DaemonEvents daemonEvent)
+            => daemonEvent switch
+            {
+                DaemonEvents.OutLog => "outlog",
+                DaemonEvents.ErrLog => "errlog",
+                DaemonEvents.ProcessStopped => "procstop",
+                DaemonEvents.ProcessStarted => "procstart",
+                DaemonEvents.ProcessAdded => "procadd",
+                DaemonEvents.ProcessDeleted => "procdel"
+            };
     }
 }

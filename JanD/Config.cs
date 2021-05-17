@@ -65,6 +65,7 @@ namespace JanD
                     WasStopped();
                 if (proc.ShouldRestart)
                     proc.Start();
+                Daemon.ProcessEventAsync(Daemon.DaemonEvents.ProcessStopped, proc.Name);
             };
 
             void Log(string whichStd, DataReceivedEventArgs eventArgs)
@@ -121,6 +122,7 @@ namespace JanD
                         throw;
                 }
             }
+            Daemon.ProcessEventAsync(Daemon.DaemonEvents.ProcessStarted, proc.Name);
         }
 
         /// <summary>

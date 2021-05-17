@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Resources;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -305,6 +306,18 @@ namespace JanD
 
                     break;
                 }
+                case "events":
+                {
+                    var client = new IpcClient();
+                    client.RequestString("subscribe-events", "255");
+                    byte[] bytes = new byte[100_000];
+                    while (true)
+                    {
+                        var count = client.Stream.Read(bytes, 0, bytes.Length);
+                        Console.WriteLine(Encoding.UTF8.GetString(bytes[..count]));
+                    }
+                    break;
+                }
                 case "flush":
                 {
                     var client = new IpcClient();
@@ -350,7 +363,6 @@ namespace JanD
         public static void LogWatch(IpcClient client)
         {
             byte[] bytes = new byte[100_000];
-            AsyncCallback callback = null;
             while (true)
             {
                 var count = client.Stream.Read(bytes, 0, bytes.Length);

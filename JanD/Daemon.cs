@@ -192,6 +192,7 @@ namespace JanD
                                     Processes.Add(proc);
                                     NotSaved = true;
                                     pipeServer.Write("added");
+                                    Daemon.ProcessEventAsync(Daemon.DaemonEvents.ProcessAdded, proc.Name);
                                     break;
                                 }
                                 case "start-process":
@@ -247,6 +248,7 @@ namespace JanD
                                     Processes.Remove(proc);
                                     NotSaved = true;
                                     pipeServer.Write("done");
+                                    Daemon.ProcessEventAsync(Daemon.DaemonEvents.ProcessDeleted, proc.Name);
                                     break;
                                 }
                                 case "subscribe-events":
@@ -319,6 +321,21 @@ namespace JanD
             }
         }
 
+        public static async Task ProcessEventAsync(DaemonEvents daemonEvent, string processName)
+        {
+            foreach (var connection in Connections)
+            {
+                if(!connection.Events.HasFlag(daemonEvent))
+                    continue;
+                var writer = new Utf8JsonWriter(connection.Stream);
+                writer.WriteStartObject();
+                writer.WriteString("Event", daemonEvent.ToIpcString());
+                writer.WriteString("Process", processName);
+                writer.WriteEndObject();
+                await writer.FlushAsync();
+            }
+        }
+
         public class JanDNewProcess
         {
             public string Name { get; set; }
@@ -348,8 +365,18 @@ namespace JanD
         [Flags]
         public enum DaemonEvents
         {
+            // outlog
             OutLog = 0b0000_0001,
-            ErrLog = 0b0000_0010
+            // errlog
+            ErrLog = 0b0000_0010,
+            // procstop
+            ProcessStopped = 0b0000_0100,
+            // procstart
+            ProcessStarted = 0b0000_1000,
+            // procadd
+            ProcessAdded = 0b0001_0000,
+            // procdel
+            ProcessDeleted = 0b0010_0000,
         }
     }
 
