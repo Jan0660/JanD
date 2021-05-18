@@ -33,6 +33,13 @@ namespace JanD
             return Encoding.UTF8.GetString(bytes[..count]);
         }
 
+        public T RequestJson<T>(string type, string data)
+        {
+            SendString(type, data);
+            Span<byte> bytes = stackalloc byte[BufferSize];
+            return JsonSerializer.Deserialize<T>(bytes[..Stream.Read(bytes)]);
+        }
+
         public DaemonStatus GetStatus()
         {
             SendString("status", "");

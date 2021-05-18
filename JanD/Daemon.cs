@@ -325,14 +325,20 @@ namespace JanD
         {
             foreach (var connection in Connections)
             {
-                if(!connection.Events.HasFlag(daemonEvent))
+                if (!connection.Events.HasFlag(daemonEvent))
                     continue;
-                var writer = new Utf8JsonWriter(connection.Stream);
-                writer.WriteStartObject();
-                writer.WriteString("Event", daemonEvent.ToIpcString());
-                writer.WriteString("Process", processName);
-                writer.WriteEndObject();
-                await writer.FlushAsync();
+                try
+                {
+                    var writer = new Utf8JsonWriter(connection.Stream);
+                    writer.WriteStartObject();
+                    writer.WriteString("Event", daemonEvent.ToIpcString());
+                    writer.WriteString("Process", processName);
+                    writer.WriteEndObject();
+                    await writer.FlushAsync();
+                }
+                catch
+                {
+                }
             }
         }
 
@@ -367,14 +373,19 @@ namespace JanD
         {
             // outlog
             OutLog = 0b0000_0001,
+
             // errlog
             ErrLog = 0b0000_0010,
+
             // procstop
             ProcessStopped = 0b0000_0100,
+
             // procstart
             ProcessStarted = 0b0000_1000,
+
             // procadd
             ProcessAdded = 0b0001_0000,
+
             // procdel
             ProcessDeleted = 0b0010_0000,
         }
