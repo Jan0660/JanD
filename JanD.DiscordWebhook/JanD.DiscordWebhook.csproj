@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net5.0</TargetFramework>
+        <InvariantGlobalization>true</InvariantGlobalization>
+
+        <IlcOptimizationPreference>Size</IlcOptimizationPreference>
+        <PublishTrimmed>true</PublishTrimmed>
+        <TrimMode>Link</TrimMode>
+        <IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
+        <DebuggerSupport>false</DebuggerSupport>
+        <EnableUnsafeBinaryFormatterSerialization>false</EnableUnsafeBinaryFormatterSerialization>
+        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\JanD\JanD.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <TrimmerRootAssembly Include="JanD.DiscordWebhook"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Discord.Net.Webhook" Version="2.3.1"/>
+    </ItemGroup>
+
+</Project>
