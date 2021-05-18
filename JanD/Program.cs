@@ -86,8 +86,14 @@ namespace JanD
                     var status = client.GetStatus();
                     var processes = JsonSerializer.Deserialize<JanDRuntimeProcess[]>(json);
 
+                    int maxNameLength = 0;
+                    foreach(var process in processes)
+                        if (process.Name.Length > maxNameLength)
+                            maxNameLength = process.Name.Length;
+                    maxNameLength = maxNameLength < 12 ? 14 : maxNameLength;
+                    var nameFormatString = $"{{0,-{maxNameLength + 2}}}";
                     Console.Write("{0,-6}", "R|E|A");
-                    Console.Write("{0,-14}", "Name");
+                    Console.Write(nameFormatString, "Name");
                     Console.Write("{0,-5}", "↺");
                     Console.Write("{0,-10}", "PID");
                     Console.Write("{0,-7}", "Mem");
@@ -99,7 +105,7 @@ namespace JanD
                         Console.Write((process.Running ? TrueMark : FalseMark) + "|" +
                                       (process.Enabled ? TrueMark : FalseMark) + "|"
                                       + (process.AutoRestart ? TrueMark : FalseMark) + " ");
-                        Console.Write("{0,-14}", process.Name);
+                        Console.Write(nameFormatString, process.Name);
                         Console.ForegroundColor = ConsoleColor.DarkGray;
                         Console.Write("{0,-5}",
                             process.RestartCount.ToString().Length > 3
