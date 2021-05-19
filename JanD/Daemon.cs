@@ -84,7 +84,6 @@ namespace JanD
                         var count = pipeServer.EndRead(state);
                         if (count == 0)
                         {
-                            Console.WriteLine("Read returned zero bytes, disconnecting connection.");
                             pipeServer.Disconnect();
                             Connections.Remove(connection);
                             pipeServer.Dispose();
@@ -298,7 +297,6 @@ namespace JanD
                         {
                             Connections.Remove(connection);
                             pipeServer.Dispose();
-                            Console.WriteLine("IPC disconnected.");
                             return;
                         }
 
