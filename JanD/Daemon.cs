@@ -74,7 +74,8 @@ namespace JanD
                 // pipeServer.ReadMode = PipeTransmissionMode.Message;
                 pipeServer.BeginWaitForConnection(state =>
                 {
-                    DaemonLog("IPC CONNECTION h!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                    if (Config.LogIpc)
+                        DaemonLog("IPC CONNECTION h!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
                     var connection = new DaemonConnection(pipeServer);
                     Connections.Add(connection);
                     var bytes = new byte[10000];
@@ -92,7 +93,8 @@ namespace JanD
 
                         try
                         {
-                            DaemonLog("receive'd ip[[c: " + Encoding.UTF8.GetString(bytes.AsSpan()[..count]));
+                            if (Config.LogIpc)
+                                DaemonLog("Received IPC: " + Encoding.UTF8.GetString(bytes.AsSpan()[..count]));
                             var packet = JsonSerializer.Deserialize<IpcPacket>(bytes.AsSpan()[..count]);
                             switch (packet.Type)
                             {
@@ -215,7 +217,10 @@ namespace JanD
                                 case "save-config":
                                 {
                                     Config.Processes = Processes.ToArray();
-                                    var json = JsonSerializer.Serialize(Config);
+                                    var json = JsonSerializer.Serialize(Config, new JsonSerializerOptions()
+                                    {
+                                        WriteIndented = Config.FormatConfig
+                                    });
                                     File.WriteAllText("./config.json", json);
                                     NotSaved = false;
                                     pipeServer.Write("done");

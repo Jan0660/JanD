@@ -12,6 +12,8 @@ namespace JanD
     public class Config
     {
         public JanDProcess[] Processes { get; set; }
+        public bool LogIpc { get; set; } = true;
+        public bool FormatConfig { get; set; } = true;
     }
 
     public class JanDProcess
@@ -31,48 +33,55 @@ namespace JanD
 
         public void Start()
         {
-            var proc = this;
-            if (proc.Process != null)
+            if (this.Process != null)
                 return;
             Console.WriteLine(
-                Ansi.ForegroundColor($"Starting: Name: {proc.Name}; Command: {proc.Command}", 0, 247, 247));
-            OutWriter ??= new StreamWriter(Path.Combine("./logs/") + proc.Name + "-out.log", true);
-            ErrWriter ??= new StreamWriter(Path.Combine("./logs/") + proc.Name + "-err.log", true);
+                Ansi.ForegroundColor($"Starting: Name: {this.Name}; Command: {this.Command}", 0, 247, 247));
+            OutWriter ??= new StreamWriter(Path.Combine("./logs/") + this.Name + "-out.log", true);
+            ErrWriter ??= new StreamWriter(Path.Combine("./logs/") + this.Name + "-err.log", true);
             var process = new Process();
-            var index = proc.Command.IndexOf(' ');
-            var last = proc.Command.Length;
+            var index = this.Command.IndexOf(' ');
+            var last = this.Command.Length;
             var startInfo = new ProcessStartInfo
             {
-                FileName = proc.Command[..(index == -1 ? last : index)],
-                Arguments = proc.Command[(index == -1 ? last : (proc.Command.IndexOf(' ') + 1))..],
+                FileName = this.Command[..(index == -1 ? last : index)],
+                Arguments = this.Command[(index == -1 ? last : (this.Command.IndexOf(' ') + 1))..],
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 RedirectStandardInput = false,
                 UseShellExecute = false,
                 StandardErrorEncoding = Encoding.UTF8,
                 StandardOutputEncoding = Encoding.UTF8,
-                WorkingDirectory = proc.WorkingDirectory ?? Directory.GetCurrentDirectory()
+                WorkingDirectory = this.WorkingDirectory ?? Directory.GetCurrentDirectory()
             };
             process.StartInfo = startInfo;
             process.EnableRaisingEvents = true;
             process.Exited += (sender, args) =>
             {
                 Console.WriteLine(Ansi.ForegroundColor(
-                    $"Exited: {proc.Name}; ExitCode: {process.ExitCode}; AutoRestart: {proc.AutoRestart}; ShouldRestart: {proc.ShouldRestart};",
+                    $"Exited: {this.Name}; ExitCode: {process.ExitCode}; AutoRestart: {this.AutoRestart}; ShouldRestart: {this.ShouldRestart};",
                     0, 247,
                     247));
                 if (!Stopped)
                     WasStopped();
-                if (proc.ShouldRestart)
-                    proc.Start();
-                Daemon.ProcessEventAsync(Daemon.DaemonEvents.ProcessStopped, proc.Name);
+                if (this.ShouldRestart)
+                    try
+                    {
+                        this.Start();
+                    }
+                    catch(Exception exc)
+                    {
+                        Console.WriteLine($"{this.Name} failed to restart.");
+                    }
+
+                Daemon.ProcessEventAsync(Daemon.DaemonEvents.ProcessStopped, this.Name);
             };
 
             void Log(string whichStd, DataReceivedEventArgs eventArgs)
             {
                 if (eventArgs.Data == null)
                     return;
-                var str = Ansi.ForegroundColor($"{proc.Name} {whichStd}| ", (byte) (whichStd == "err" ? 255 : 0),
+                var str = Ansi.ForegroundColor($"{this.Name} {whichStd}| ", (byte) (whichStd == "err" ? 255 : 0),
                               (byte) (whichStd == "out" ? 255 : 0), 0) + eventArgs.Data +
                           '\n';
                 if (whichStd == "out")
@@ -83,12 +92,12 @@ namespace JanD
                 foreach (var con in Daemon.Connections.Where(c =>
                     c.Events.HasFlag((whichStd == "out" ? Daemon.DaemonEvents.OutLog : Daemon.DaemonEvents.ErrLog))))
                 {
-                    if ((whichStd == "out" ? con.OutLogSubs.Contains(proc.Name) : con.ErrLogSubs.Contains(proc.Name)))
+                    if ((whichStd == "out" ? con.OutLogSubs.Contains(this.Name) : con.ErrLogSubs.Contains(this.Name)))
                     {
                         var json = new Utf8JsonWriter(con.Stream);
                         json.WriteStartObject();
                         json.WriteString("Event", whichStd + "log");
-                        json.WriteString("Process", proc.Name);
+                        json.WriteString("Process", this.Name);
                         json.WriteString("Value", str);
                         json.WriteEndObject();
                         json.Flush();
@@ -99,7 +108,7 @@ namespace JanD
             process.OutputDataReceived += (_, eventArgs) => Log("out", eventArgs);
             process.ErrorDataReceived += (_, eventArgs) => Log("err", eventArgs);
             process.Start();
-            proc.Process = process;
+            this.Process = process;
             process.BeginOutputReadLine();
             process.StartInfo.RedirectStandardError = true;
             /*
@@ -122,7 +131,7 @@ namespace JanD
                         throw;
                 }
             }
-            Daemon.ProcessEventAsync(Daemon.DaemonEvents.ProcessStarted, proc.Name);
+            Daemon.ProcessEventAsync(Daemon.DaemonEvents.ProcessStarted, this.Name);
         }
 
         /// <summary>
