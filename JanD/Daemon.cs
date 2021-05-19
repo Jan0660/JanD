@@ -105,6 +105,9 @@ namespace JanD
                                     Console.WriteLine(packet.Data);
                                     break;
                                 case "exit":
+                                    Console.WriteLine("Exit requested. Killing all processes.");
+                                    foreach (var process in Processes)
+                                        process?.Process?.Kill(true);
                                     Environment.Exit(0);
                                     break;
                                 case "status":
