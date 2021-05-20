@@ -47,6 +47,7 @@ namespace JanD
 
             switch (args[0].ToLower())
             {
+                case "up":
                 case "start":
                 {
                     if (args.Length == 2)
@@ -166,6 +167,7 @@ namespace JanD
 
                     break;
                 }
+                case "down":
                 case "stop":
                 {
                     var client = new IpcClient();
@@ -180,6 +182,7 @@ namespace JanD
                     Console.WriteLine(str);
                     break;
                 }
+                case "i":
                 case "info":
                 {
                     var client = new IpcClient();
@@ -198,6 +201,7 @@ namespace JanD
                     InfoBool("Running", proc.Running);
                     break;
                 }
+                case "add":
                 case "new":
                 {
                     var client = new IpcClient();
@@ -324,6 +328,8 @@ namespace JanD
 
                     break;
                 }
+                case "h":
+                case "-h":
                 case "help":
                 case "-help":
                 case "--help":
