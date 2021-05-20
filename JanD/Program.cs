@@ -31,6 +31,7 @@ namespace JanD
                     Directory.CreateDirectory(home);
                 Directory.SetCurrentDirectory(home);
             }
+
             Console.WriteLine($"JanD v{ThisAssembly.Info.Version}");
             if (args.Length == 0)
             {
@@ -87,7 +88,7 @@ namespace JanD
                     var processes = JsonSerializer.Deserialize<JanDRuntimeProcess[]>(json);
 
                     int maxNameLength = 0;
-                    foreach(var process in processes)
+                    foreach (var process in processes)
                         if (process.Name.Length > maxNameLength)
                             maxNameLength = process.Name.Length;
                     maxNameLength = maxNameLength < 12 ? 14 : maxNameLength;
@@ -116,8 +117,20 @@ namespace JanD
                         Console.ResetColor();
                         if (process.ProcessId != -1 && !process.Stopped)
                         {
+                            Process proc;
+                            try
+                            {
+                                proc = Process.GetProcessById(process.ProcessId);
+                            }
+                            catch
+                            {
+                                Console.ForegroundColor = ConsoleColor.Red;
+                                Console.Write("ERR");
+                                Console.ResetColor();
+                                goto InvalidPid;
+                            }
+
                             // Mem
-                            var proc = Process.GetProcessById(process.ProcessId);
                             var mem = proc.WorkingSet64;
                             string memString = mem switch
                             {
@@ -144,6 +157,8 @@ namespace JanD
                             Console.ResetColor();
                         }
 
+                        InvalidPid: ;
+
                         Console.WriteLine();
                     }
 
@@ -168,7 +183,8 @@ namespace JanD
                 case "info":
                 {
                     var client = new IpcClient();
-                    var proc = JsonSerializer.Deserialize<JanDRuntimeProcess>(client.RequestString("get-process-info", args[1]));
+                    var proc = JsonSerializer.Deserialize<JanDRuntimeProcess>(
+                        client.RequestString("get-process-info", args[1]));
 
                     Console.WriteLine(proc.Name);
                     Info("Command", proc.Command);
@@ -270,6 +286,8 @@ namespace JanD
 
                     break;
                 }
+                case "remove":
+                case "rm":
                 case "delete":
                 {
                     var client = new IpcClient();
@@ -284,6 +302,7 @@ namespace JanD
                         Console.WriteLine("SystemD startup services are only available on Linux with SystemD.");
                         return;
                     }
+
                     if (getuid() != 0)
                     {
                         Console.WriteLine("Run the following command as root to install the SystemD service file:");
@@ -322,6 +341,7 @@ namespace JanD
                         var count = client.Stream.Read(bytes, 0, bytes.Length);
                         Console.WriteLine(Encoding.UTF8.GetString(bytes[..count]));
                     }
+
                     break;
                 }
                 case "flush":
@@ -343,6 +363,7 @@ namespace JanD
             Console.ResetColor();
             Console.WriteLine(": " + value);
         }
+
         public static void InfoBool(string name, bool value)
         {
             Console.ForegroundColor = ConsoleColor.Cyan;
@@ -366,6 +387,7 @@ namespace JanD
                 Console.ResetColor();
             }
         }
+
         public static void LogWatch(IpcClient client)
         {
             byte[] bytes = new byte[100_000];
