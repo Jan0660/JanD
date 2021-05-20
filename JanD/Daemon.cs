@@ -172,6 +172,7 @@ namespace JanD
 
                                     if (proc.Process != null)
                                         proc.Stop();
+                                    proc.CurrentUnstableRestarts = 0;
                                     proc.Start();
                                     proc.Stopped = false;
                                     pipeServer.Write(Encoding.UTF8.GetBytes("done"));
@@ -210,6 +211,7 @@ namespace JanD
                                         return;
                                     }
 
+                                    proc.CurrentUnstableRestarts = 0;
                                     proc.Stopped = false;
                                     proc.Start();
                                     pipeServer.Write("done");

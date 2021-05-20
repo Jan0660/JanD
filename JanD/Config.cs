@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -16,6 +17,7 @@ namespace JanD
         public JanDProcess[] Processes { get; set; }
         public bool LogIpc { get; set; } = true;
         public bool FormatConfig { get; set; } = true;
+        public int MaxRestarts { get; set; } = 15;
     }
 
     public class JanDProcess
@@ -26,9 +28,14 @@ namespace JanD
         [JsonIgnore] public Process Process { get; set; }
         public bool AutoRestart { get; set; }
         public bool Enabled { get; set; }
-        [JsonIgnore] public bool ShouldRestart => !Stopped && (AutoRestart | Enabled);
+
+        [JsonIgnore]
+        public bool ShouldRestart =>
+            !Stopped && (AutoRestart | Enabled) && CurrentUnstableRestarts < Daemon.Config.MaxRestarts;
+
         [JsonIgnore] public bool Stopped { get; set; }
         [JsonIgnore] public int ExitCode { get; set; }
+        [JsonIgnore] public int CurrentUnstableRestarts { get; set; }
         [JsonIgnore] public int RestartCount { get; set; }
         [JsonIgnore] public StreamWriter OutWriter { get; set; }
         [JsonIgnore] public StreamWriter ErrWriter { get; set; }
@@ -64,9 +71,12 @@ namespace JanD
                     $"Exited: {this.Name}; ExitCode: {process.ExitCode}; AutoRestart: {this.AutoRestart}; ShouldRestart: {this.ShouldRestart};",
                     0, 247,
                     247));
+                if (process.ExitCode != 0 && !Stopped)
+                    CurrentUnstableRestarts++;
                 if (!Stopped)
                     WasStopped();
                 if (this.ShouldRestart)
+                {
                     try
                     {
                         this.Start();
@@ -75,6 +85,7 @@ namespace JanD
                     {
                         Console.WriteLine($"{this.Name} failed to restart.");
                     }
+                }
 
                 Daemon.ProcessEventAsync(Daemon.DaemonEvents.ProcessStopped, this.Name);
             };
