@@ -249,6 +249,7 @@ namespace JanD
                         "logs" => Daemon.DaemonEvents.ErrLog | Daemon.DaemonEvents.OutLog,
                         "outlogs" => Daemon.DaemonEvents.OutLog,
                         "errlogs" => Daemon.DaemonEvents.ErrLog,
+                        _ => Daemon.DaemonEvents.ErrLog | Daemon.DaemonEvents.OutLog
                     };
                     var client = new IpcClient();
                     var status = client.GetStatus();
@@ -341,8 +342,6 @@ namespace JanD
                         var count = client.Stream.Read(bytes, 0, bytes.Length);
                         Console.WriteLine(Encoding.UTF8.GetString(bytes[..count]));
                     }
-
-                    break;
                 }
                 case "flush":
                 {

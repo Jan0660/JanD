@@ -46,7 +46,8 @@ namespace JanD
                 DaemonEvents.ProcessStopped => "procstop",
                 DaemonEvents.ProcessStarted => "procstart",
                 DaemonEvents.ProcessAdded => "procadd",
-                DaemonEvents.ProcessDeleted => "procdel"
+                DaemonEvents.ProcessDeleted => "procdel",
+                _ => "invalid"
             };
     }
 }

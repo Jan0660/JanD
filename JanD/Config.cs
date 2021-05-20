@@ -7,6 +7,8 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
+#pragma warning disable 4014
+
 namespace JanD
 {
     public class Config
@@ -69,7 +71,7 @@ namespace JanD
                     {
                         this.Start();
                     }
-                    catch(Exception exc)
+                    catch
                     {
                         Console.WriteLine($"{this.Name} failed to restart.");
                     }
@@ -131,6 +133,7 @@ namespace JanD
                         throw;
                 }
             }
+
             Daemon.ProcessEventAsync(Daemon.DaemonEvents.ProcessStarted, this.Name);
         }
 
