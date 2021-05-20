@@ -8,6 +8,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+
 #pragma warning disable 4014
 
 namespace JanD
@@ -121,6 +122,22 @@ namespace JanD
                                     j.WriteString("Directory", Directory.GetCurrentDirectory());
                                     j.WriteEndObject();
                                     j.Flush();
+                                    break;
+                                }
+                                case "rename-process":
+                                {
+                                    var val1 = packet.Data[..packet.Data.IndexOf(':')];
+                                    var val2 = packet.Data[(packet.Data.IndexOf(':') + 1)..];
+                                    if (Processes.Any(p => p.Name == val2))
+                                    {
+                                        pipeServer.Write("ERR:already-exists");
+                                        return;
+                                    }
+
+                                    var proc = GetProcess(val1);
+                                    proc.Name = val2;
+                                    NotSaved = true;
+                                    pipeServer.Write("done");
                                     break;
                                 }
                                 case "set-enabled":

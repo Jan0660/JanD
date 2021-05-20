@@ -349,6 +349,12 @@ namespace JanD
                     Console.WriteLine(client.RequestString("flush-all-logs", ""));
                     break;
                 }
+                case "rename":
+                {
+                    var client = new IpcClient();
+                    Console.WriteLine(client.RequestString("rename-process", args[1] + ':' + args[2]));
+                    break;
+                }
                 default:
                     Console.WriteLine("Unknown command. For a list of commands see the `help` command.");
                     return;

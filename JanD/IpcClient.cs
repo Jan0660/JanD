@@ -28,9 +28,7 @@ namespace JanD
         public string RequestString(string type, string data)
         {
             SendString(type, data);
-            Span<byte> bytes = stackalloc byte[BufferSize];
-            var count = Stream.Read(bytes);
-            return Encoding.UTF8.GetString(bytes[..count]);
+            return ReadString();
         }
 
         public T RequestJson<T>(string type, string data)
@@ -46,6 +44,13 @@ namespace JanD
             Span<byte> bytes = stackalloc byte[BufferSize];
             var count = Stream.Read(bytes);
             return JsonSerializer.Deserialize<DaemonStatus>(bytes[..count]);
+        }
+
+        public string ReadString()
+        {
+            Span<byte> bytes = stackalloc byte[BufferSize];
+            var count = Stream.Read(bytes);
+            return Encoding.UTF8.GetString(bytes[..count]);
         }
 
         public void Write(string str)

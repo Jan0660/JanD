@@ -17,4 +17,5 @@ Commands:
     delete <name>                            Delete a process.
     startup                                  Generate a SystemD service file.
     flush                                    Ensure all logs are written to disk.
+    rename <currentName> <newName>           Rename a process.
     help                                     Show this text.
