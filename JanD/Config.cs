@@ -107,13 +107,20 @@ namespace JanD
                 {
                     if ((whichStd == "out" ? con.OutLogSubs.Contains(this.Name) : con.ErrLogSubs.Contains(this.Name)))
                     {
-                        var json = new Utf8JsonWriter(con.Stream);
-                        json.WriteStartObject();
-                        json.WriteString("Event", whichStd + "log");
-                        json.WriteString("Process", this.Name);
-                        json.WriteString("Value", str);
-                        json.WriteEndObject();
-                        json.Flush();
+                        try
+                        {
+                            var json = new Utf8JsonWriter(con.Stream);
+                            json.WriteStartObject();
+                            json.WriteString("Event", whichStd + "log");
+                            json.WriteString("Process", this.Name);
+                            json.WriteString("Value", str);
+                            json.WriteEndObject();
+                            json.Flush();
+                            json.Dispose();
+                        }
+                        catch
+                        {
+                        }
                     }
                 }
             }
