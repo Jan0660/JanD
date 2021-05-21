@@ -1,4 +1,5 @@
-﻿using System.IO.Pipes;
+﻿using System.Collections.Generic;
+using System.IO.Pipes;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
@@ -49,5 +50,18 @@ namespace JanD
                 DaemonEvents.ProcessDeleted => "procdel",
                 _ => "invalid"
             };
+
+        public static bool TryRemove<T>(this List<T> list, T item)
+        {
+            try
+            {
+                list.Remove(item);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
     }
 }

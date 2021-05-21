@@ -88,7 +88,7 @@ namespace JanD
                         if (count == 0)
                         {
                             pipeServer.Disconnect();
-                            Connections.Remove(connection);
+                            Connections.TryRemove(connection);
                             pipeServer.Dispose();
                             return;
                         }
@@ -320,7 +320,7 @@ namespace JanD
                     {
                         if (!pipeServer.IsConnected)
                         {
-                            Connections.Remove(connection);
+                            Connections.TryRemove(connection);
                             pipeServer.Dispose();
                             return;
                         }
