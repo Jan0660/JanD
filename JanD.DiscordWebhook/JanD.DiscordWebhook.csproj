@@ -3,27 +3,28 @@
     <PropertyGroup>
         <OutputType>Exe</OutputType>
         <TargetFramework>net5.0</TargetFramework>
+        <AssemblyName>JanD.DiscordWebhook</AssemblyName>
+        <StartupObject>JanD.DiscordWebhook.Program</StartupObject>
         <InvariantGlobalization>true</InvariantGlobalization>
 
-        <IlcOptimizationPreference>Size</IlcOptimizationPreference>
-        <PublishTrimmed>true</PublishTrimmed>
+        <IlcOptimizationPreference>Speed</IlcOptimizationPreference>
+        <PublishTrimmed>false</PublishTrimmed>
         <TrimMode>Link</TrimMode>
         <IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
         <DebuggerSupport>false</DebuggerSupport>
         <EnableUnsafeBinaryFormatterSerialization>false</EnableUnsafeBinaryFormatterSerialization>
         <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+        <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)\GeneratedFiles</CompilerGeneratedFilesOutputPath>
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\JanD\JanD.csproj"/>
+        <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="6.0.0-*" />
+        <PackageReference Condition="'$(RuntimeIdentifier)' == 'linux-arm64'" Include="runtime.linux-x64.Microsoft.DotNet.ILCompiler" Version="6.0.0-*" />
+        <ProjectReference Include="../JanD/JanD.csproj" ExcludeAssets="JanD.Program" />
     </ItemGroup>
 
     <ItemGroup>
-        <TrimmerRootAssembly Include="JanD.DiscordWebhook"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <PackageReference Include="Discord.Net.Webhook" Version="2.3.1"/>
+        <TrimmerRootAssembly Include="JanD.DiscordWebhook" />
     </ItemGroup>
 
 </Project>
