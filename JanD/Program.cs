@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.Resources;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -361,9 +363,85 @@ namespace JanD
                     Console.WriteLine(client.RequestString("rename-process", args[1] + ':' + args[2]));
                     break;
                 }
+                case "config":
+                {
+                    var client = new IpcClient();
+                    if (args.Length == 1)
+                    {
+                        var config = client.RequestJson<Config>("get-config", "");
+                        var type = config.GetType();
+                        foreach (var property in type.GetProperties(BindingFlags.Instance | BindingFlags.Public))
+                        {
+                            if (property.PropertyType == typeof(bool))
+                            {
+                                InfoBool(property.Name, (bool) property.GetValue(config)!);
+                            }
+                            else if (property.PropertyType == typeof(int))
+                            {
+                                Info(property.Name, property.GetValue(config)!.ToString());
+                            }
+
+                            LogDescription(property);
+                        }
+                    }
+                    else if (args.Length > 2)
+                    {
+                        var val = String.Join(' ', args[2..]);
+                        var res = client.RequestString("set-config", args[1] + ":" + val);
+                        if (res == "done")
+                        {
+                            Console.ForegroundColor = ConsoleColor.Cyan;
+                            Console.Write(args[1]);
+                            Console.ResetColor();
+                            Console.Write(" has been set to ");
+                            Console.ForegroundColor = ConsoleColor.Cyan;
+                            Console.Write(val);
+                            Console.ResetColor();
+                            Console.WriteLine(".");
+                            NotSavedCheck(client.GetStatus());
+                        }
+                        else
+                        {
+                            Console.BackgroundColor = ConsoleColor.Red;
+                            Console.WriteLine("Setting option failed.");
+                            Console.ResetColor();
+                            Console.WriteLine(res);
+                        }
+                    }
+                    else
+                    {
+                        var config = client.RequestJson<Config>("get-config", "");
+                        var type = config.GetType();
+                        var property = type.GetProperties(BindingFlags.Instance | BindingFlags.Public)
+                            .FirstOrDefault(p => p.Name.ToLower() == args[1]);
+                        if (property != null)
+                        {
+                            Console.WriteLine(property.GetValue(config)!.ToString());
+
+                            LogDescription(property);
+                        }
+                        else
+                        {
+                            Console.WriteLine("Invalid property.");
+                        }
+                    }
+
+                    break;
+                }
                 default:
                     Console.WriteLine("Unknown command. For a list of commands see the `help` command.");
                     return;
+            }
+        }
+
+        public static void LogDescription(PropertyInfo property)
+        {
+            var att = property.GetCustomAttribute<DescriptionAttribute>();
+            if (att != null)
+            {
+                Console.ForegroundColor = ConsoleColor.DarkGray;
+                Console.WriteLine("└→ " + att.Value);
+                Console.ResetColor();
             }
         }
 
@@ -394,7 +472,7 @@ namespace JanD
             if (status.NotSaved)
             {
                 Console.ForegroundColor = ConsoleColor.DarkRed;
-                Console.WriteLine("Process list not saved, use the `save` command to save it.");
+                Console.WriteLine("Process list or configuration not saved, use the `save` command to save it.");
                 Console.ResetColor();
             }
         }
