@@ -18,7 +18,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="6.0.0-*" />
+        <PackageReference Condition="'$(RuntimeIdentifier)' != 'linux-arm'" Include="Microsoft.DotNet.ILCompiler" Version="6.0.0-*" />
         <PackageReference Condition="'$(RuntimeIdentifier)' == 'linux-arm64'" Include="runtime.linux-x64.Microsoft.DotNet.ILCompiler" Version="6.0.0-*" />
         <ProjectReference Include="../JanD/JanD.csproj" ExcludeAssets="JanD.Program" />
     </ItemGroup>
