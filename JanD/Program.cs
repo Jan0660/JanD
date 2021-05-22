@@ -318,7 +318,7 @@ namespace JanD
                         return;
                     }
 
-                    if (getuid() != 0)
+                    if (getuid() != 0 || args.Length == 1)
                     {
                         Console.WriteLine("Run the following command as root to install the SystemD service file:");
                         Console.WriteLine(
