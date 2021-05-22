@@ -84,7 +84,16 @@ namespace JanD
                     AsyncCallback callback = null;
                     callback = state =>
                     {
-                        var count = pipeServer.EndRead(state);
+                        int count = 0;
+                        try
+                        {
+                            count = pipeServer.EndRead(state);
+                        }
+                        catch
+                        {
+                            // death has happened, the (count == 0) if statement will take care of cleanup
+                        }
+
                         if (count == 0)
                         {
                             pipeServer.Disconnect();
