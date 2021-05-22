@@ -20,11 +20,27 @@ namespace JanD
         public static CancellationTokenSource CancellationTokenSource = new();
         public static List<DaemonConnection> Connections = new();
 
+        #region util
+
+        public static JanDProcess GetProcess(string name, bool throwOnNotFound = true)
+        {
+            var proc = Processes.FirstOrDefault(p => p.Name == name);
+            if (proc == null)
+            {
+                if (throwOnNotFound)
+                    throw new("invalid-process");
+            }
+
+            return proc;
+        }
+
+        public static void DaemonLog(string str)
+            => Console.WriteLine(Ansi.ForegroundColor(str, 0, 247, 247));
+
+        #endregion
+
         public static async Task Start()
         {
-            void DaemonLog(string str)
-                => Console.WriteLine(Ansi.ForegroundColor(str, 0, 247, 247));
-
             DaemonLog("Starting daemon in " + Directory.GetCurrentDirectory());
             DaemonLog($"With PIPE_NAME: {Program.PipeName}");
             try
@@ -56,18 +72,6 @@ namespace JanD
                 }
             }
 
-            JanDProcess GetProcess(string name, bool throwOnNotFound = true)
-            {
-                var proc = Processes.FirstOrDefault(p => p.Name == name);
-                if (proc == null)
-                {
-                    if (throwOnNotFound)
-                        throw new("invalid-process");
-                }
-
-                return proc;
-            }
-
 
             void NewPipeServer()
             {
@@ -76,7 +80,7 @@ namespace JanD
                 pipeServer.BeginWaitForConnection(state =>
                     {
                         if (Config.LogIpc)
-                            DaemonLog("IPC CONNECTION h!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                            DaemonLog("IPC connected.");
                         var connection = new DaemonConnection(pipeServer);
                         Connections.Add(connection);
                         var bytes = new byte[10000];
@@ -103,250 +107,7 @@ namespace JanD
 
                             try
                             {
-                                if (Config.LogIpc)
-                                    DaemonLog("Received IPC: " + Encoding.UTF8.GetString(bytes.AsSpan()[..count]));
-                                var packet = JsonSerializer.Deserialize<IpcPacket>(bytes.AsSpan()[..count]);
-                                switch (packet.Type)
-                                {
-                                    case "ping":
-                                        Console.WriteLine("ping");
-                                        pipeServer.Write("pong");
-                                        break;
-                                    case "write":
-                                        Console.WriteLine(packet.Data);
-                                        break;
-                                    case "exit":
-                                        Console.WriteLine("Exit requested. Killing all processes.");
-                                        foreach (var process in Processes)
-                                            process?.Process?.Kill(true);
-                                        Environment.Exit(0);
-                                        break;
-                                    case "status":
-                                    {
-                                        var j = new Utf8JsonWriter(pipeServer);
-                                        j.WriteStartObject();
-                                        j.WriteNumber("Processes", Processes.Count);
-                                        j.WriteBoolean("NotSaved", NotSaved);
-                                        j.WriteString("Directory", Directory.GetCurrentDirectory());
-                                        j.WriteString("Version", ThisAssembly.Info.Version);
-                                        j.WriteEndObject();
-                                        j.Flush();
-                                        break;
-                                    }
-                                    case "rename-process":
-                                    {
-                                        var val1 = packet.Data[..packet.Data.IndexOf(':')];
-                                        var val2 = packet.Data[(packet.Data.IndexOf(':') + 1)..];
-                                        if (Processes.Any(p => p.Name == val2))
-                                        {
-                                            pipeServer.Write("ERR:already-exists");
-                                            return;
-                                        }
-
-                                        var proc = GetProcess(val1);
-                                        proc.Name = val2;
-                                        NotSaved = true;
-                                        pipeServer.Write("done");
-                                        break;
-                                    }
-                                    case "set-enabled":
-                                    {
-                                        var separatorIndex = packet.Data.IndexOf(':');
-                                        var proc = Processes.FirstOrDefault(p =>
-                                            p.Name == packet.Data[..separatorIndex]);
-                                        if (proc == null)
-                                        {
-                                            pipeServer.Write("ERR:invalid-process");
-                                            return;
-                                        }
-
-                                        proc.Enabled = Boolean.Parse(packet.Data[(separatorIndex + 1)..]);
-                                        pipeServer.Write(proc.Enabled.ToString());
-                                        NotSaved = true;
-                                        break;
-                                    }
-                                    case "get-process-info":
-                                    {
-                                        var proc = GetProcess(packet.Data);
-
-                                        var j = new Utf8JsonWriter(pipeServer);
-                                        j.WriteStartObject();
-                                        j.WriteProcessInfo(proc);
-                                        j.WriteEndObject();
-                                        j.Flush();
-                                        break;
-                                    }
-                                    case "stop-process":
-                                    {
-                                        var proc = GetProcess(packet.Data);
-
-                                        if (proc.Process == null)
-                                        {
-                                            pipeServer.Write("already-stopped");
-                                        }
-                                        else
-                                        {
-                                            proc.Stop();
-                                            pipeServer.Write("killed");
-                                        }
-
-                                        break;
-                                    }
-                                    case "restart-process":
-                                    {
-                                        var proc = GetProcess(packet.Data);
-
-                                        if (proc.Process != null)
-                                            proc.Stop();
-                                        proc.CurrentUnstableRestarts = 0;
-                                        proc.Start();
-                                        proc.Stopped = false;
-                                        pipeServer.Write(Encoding.UTF8.GetBytes("done"));
-                                        break;
-                                    }
-                                    case "new-process":
-                                    {
-                                        var def = JsonSerializer.Deserialize<JanDNewProcess>(packet.Data);
-                                        if (Processes.Any(p => p.Name == def.Name))
-                                        {
-                                            pipeServer.Write("ERR:already-exists");
-                                            return;
-                                        }
-
-                                        JanDProcess proc = new()
-                                        {
-                                            Name = def.Name,
-                                            Command = def.Command,
-                                            WorkingDirectory = def.WorkingDirectory,
-                                            AutoRestart = true,
-                                            Enabled = true
-                                        };
-                                        Processes.Add(proc);
-                                        NotSaved = true;
-                                        pipeServer.Write("added");
-                                        Daemon.ProcessEventAsync(Daemon.DaemonEvents.ProcessAdded, proc.Name);
-                                        break;
-                                    }
-                                    case "start-process":
-                                    {
-                                        var proc = GetProcess(packet.Data);
-
-                                        if (proc.Process != null)
-                                        {
-                                            pipeServer.Write("ERR:already-started");
-                                            return;
-                                        }
-
-                                        proc.CurrentUnstableRestarts = 0;
-                                        proc.Stopped = false;
-                                        proc.Start();
-                                        pipeServer.Write("done");
-                                        break;
-                                    }
-                                    case "save-config":
-                                    {
-                                        Config.Processes = Processes.ToArray();
-                                        var json = JsonSerializer.Serialize(Config, new JsonSerializerOptions()
-                                        {
-                                            WriteIndented = Config.FormatConfig
-                                        });
-                                        File.WriteAllText("./config.json", json);
-                                        NotSaved = false;
-                                        pipeServer.Write("done");
-                                        break;
-                                    }
-                                    case "get-process-list":
-                                    {
-                                        pipeServer.Write(JsonSerializer.SerializeToUtf8Bytes(Processes.ToArray()));
-                                        break;
-                                    }
-                                    case "get-processes":
-                                    {
-                                        var writer = new Utf8JsonWriter(pipeServer);
-                                        writer.WriteStartArray();
-                                        foreach (var process in Processes)
-                                        {
-                                            writer.WriteStartObject();
-                                            writer.WriteProcessInfo(process);
-                                            writer.WriteEndObject();
-                                        }
-
-                                        writer.WriteEndArray();
-                                        writer.Flush();
-                                        break;
-                                    }
-                                    case "delete-process":
-                                    {
-                                        var proc = GetProcess(packet.Data);
-
-                                        proc.Stopped = true;
-                                        proc.Process?.Kill();
-                                        Processes.Remove(proc);
-                                        NotSaved = true;
-                                        pipeServer.Write("done");
-                                        Daemon.ProcessEventAsync(Daemon.DaemonEvents.ProcessDeleted, proc.Name);
-                                        break;
-                                    }
-                                    case "subscribe-events":
-                                    {
-                                        connection.Events =
-                                            (DaemonEvents) ((int) connection.Events | int.Parse(packet.Data));
-                                        pipeServer.Write("done");
-                                        break;
-                                    }
-                                    case "subscribe-outlog-event":
-                                    {
-                                        connection.OutLogSubs.Add(packet.Data);
-                                        pipeServer.Write("done");
-                                        break;
-                                    }
-                                    case "subscribe-errlog-event":
-                                    {
-                                        connection.ErrLogSubs.Add(packet.Data);
-                                        pipeServer.Write("done");
-                                        break;
-                                    }
-                                    case "get-config":
-                                    {
-                                        var writer = new Utf8JsonWriter(pipeServer);
-                                        writer.WriteStartObject();
-                                        writer.WriteBoolean("LogIpc", Config.LogIpc);
-                                        writer.WriteBoolean("FormatConfig", Config.FormatConfig);
-                                        writer.WriteNumber("MaxRestarts", Config.MaxRestarts);
-                                        writer.WriteBoolean("LogProcessOutput", Config.LogProcessOutput);
-                                        writer.WriteEndObject();
-                                        writer.Flush();
-                                        break;
-                                    }
-                                    case "set-config":
-                                    {
-                                        var name = packet.Data[..packet.Data.IndexOf(':')];
-                                        var value = packet.Data[(packet.Data.IndexOf(':') + 1)..];
-                                        var property = typeof(Config).GetPropertyCaseInsensitive(name);
-                                        if (property == null)
-                                        {
-                                            pipeServer.Write("Option not found.");
-                                            return;
-                                        }
-                                        if (property!.PropertyType == typeof(bool))
-                                            property.SetValue(Config, bool.Parse(value));
-                                        else if (property.PropertyType == typeof(int))
-                                            property.SetValue(Config, int.Parse(value));
-                                        pipeServer.Write("done");
-                                        NotSaved = true;
-                                        break;
-                                    }
-
-                                    case "flush-all-logs":
-                                        foreach (var proc in Processes)
-                                        {
-                                            proc.OutWriter?.Flush();
-                                            proc.ErrWriter?.Flush();
-                                        }
-
-                                        pipeServer.Write("done");
-                                        break;
-                                }
+                                HandlePacket(pipeServer, bytes, count, connection);
                             }
                             catch (Exception exception)
                             {
@@ -385,6 +146,256 @@ namespace JanD
                 Console.WriteLine("Exit requested. Killing all processes.");
                 foreach (var process in Processes)
                     process?.Process?.Kill(true);
+            }
+        }
+
+        public static void HandlePacket(NamedPipeServerStream pipeServer, byte[] bytes, int count,
+            DaemonConnection connection)
+        {
+            if (Config.LogIpc)
+                DaemonLog("Received IPC: " + Encoding.UTF8.GetString(bytes.AsSpan()[..count]));
+            var packet = JsonSerializer.Deserialize<IpcPacket>(bytes.AsSpan()[..count]);
+            switch (packet.Type)
+            {
+                case "ping":
+                    Console.WriteLine("ping");
+                    pipeServer.Write("pong");
+                    break;
+                case "write":
+                    Console.WriteLine(packet.Data);
+                    break;
+                case "exit":
+                    Console.WriteLine("Exit requested. Killing all processes.");
+                    foreach (var process in Processes)
+                        process?.Process?.Kill(true);
+                    Environment.Exit(0);
+                    break;
+                case "status":
+                {
+                    var j = new Utf8JsonWriter(pipeServer);
+                    j.WriteStartObject();
+                    j.WriteNumber("Processes", Processes.Count);
+                    j.WriteBoolean("NotSaved", NotSaved);
+                    j.WriteString("Directory", Directory.GetCurrentDirectory());
+                    j.WriteString("Version", ThisAssembly.Info.Version);
+                    j.WriteEndObject();
+                    j.Flush();
+                    break;
+                }
+                case "rename-process":
+                {
+                    var val1 = packet.Data[..packet.Data.IndexOf(':')];
+                    var val2 = packet.Data[(packet.Data.IndexOf(':') + 1)..];
+                    if (Processes.Any(p => p.Name == val2))
+                    {
+                        pipeServer.Write("ERR:already-exists");
+                        return;
+                    }
+
+                    var proc = GetProcess(val1);
+                    proc.Name = val2;
+                    NotSaved = true;
+                    pipeServer.Write("done");
+                    break;
+                }
+                case "set-enabled":
+                {
+                    var separatorIndex = packet.Data.IndexOf(':');
+                    var proc = Processes.FirstOrDefault(p =>
+                        p.Name == packet.Data[..separatorIndex]);
+                    if (proc == null)
+                    {
+                        pipeServer.Write("ERR:invalid-process");
+                        return;
+                    }
+
+                    proc.Enabled = Boolean.Parse(packet.Data[(separatorIndex + 1)..]);
+                    pipeServer.Write(proc.Enabled.ToString());
+                    NotSaved = true;
+                    break;
+                }
+                case "get-process-info":
+                {
+                    var proc = GetProcess(packet.Data);
+
+                    var j = new Utf8JsonWriter(pipeServer);
+                    j.WriteStartObject();
+                    j.WriteProcessInfo(proc);
+                    j.WriteEndObject();
+                    j.Flush();
+                    break;
+                }
+                case "stop-process":
+                {
+                    var proc = GetProcess(packet.Data);
+
+                    if (proc.Process == null)
+                    {
+                        pipeServer.Write("already-stopped");
+                    }
+                    else
+                    {
+                        proc.Stop();
+                        pipeServer.Write("killed");
+                    }
+
+                    break;
+                }
+                case "restart-process":
+                {
+                    var proc = GetProcess(packet.Data);
+
+                    if (proc.Process != null)
+                        proc.Stop();
+                    proc.CurrentUnstableRestarts = 0;
+                    proc.Start();
+                    proc.Stopped = false;
+                    pipeServer.Write(Encoding.UTF8.GetBytes("done"));
+                    break;
+                }
+                case "new-process":
+                {
+                    var def = JsonSerializer.Deserialize<JanDNewProcess>(packet.Data);
+                    if (Processes.Any(p => p.Name == def.Name))
+                    {
+                        pipeServer.Write("ERR:already-exists");
+                        return;
+                    }
+
+                    JanDProcess proc = new()
+                    {
+                        Name = def.Name,
+                        Command = def.Command,
+                        WorkingDirectory = def.WorkingDirectory,
+                        AutoRestart = true,
+                        Enabled = true
+                    };
+                    Processes.Add(proc);
+                    NotSaved = true;
+                    pipeServer.Write("added");
+                    Daemon.ProcessEventAsync(Daemon.DaemonEvents.ProcessAdded, proc.Name);
+                    break;
+                }
+                case "start-process":
+                {
+                    var proc = GetProcess(packet.Data);
+
+                    if (proc.Process != null)
+                    {
+                        pipeServer.Write("ERR:already-started");
+                        return;
+                    }
+
+                    proc.CurrentUnstableRestarts = 0;
+                    proc.Stopped = false;
+                    proc.Start();
+                    pipeServer.Write("done");
+                    break;
+                }
+                case "save-config":
+                {
+                    Config.Processes = Processes.ToArray();
+                    var json = JsonSerializer.Serialize(Config, new JsonSerializerOptions()
+                    {
+                        WriteIndented = Config.FormatConfig
+                    });
+                    File.WriteAllText("./config.json", json);
+                    NotSaved = false;
+                    pipeServer.Write("done");
+                    break;
+                }
+                case "get-process-list":
+                {
+                    pipeServer.Write(JsonSerializer.SerializeToUtf8Bytes(Processes.ToArray()));
+                    break;
+                }
+                case "get-processes":
+                {
+                    var writer = new Utf8JsonWriter(pipeServer);
+                    writer.WriteStartArray();
+                    foreach (var process in Processes)
+                    {
+                        writer.WriteStartObject();
+                        writer.WriteProcessInfo(process);
+                        writer.WriteEndObject();
+                    }
+
+                    writer.WriteEndArray();
+                    writer.Flush();
+                    break;
+                }
+                case "delete-process":
+                {
+                    var proc = GetProcess(packet.Data);
+
+                    proc.Stopped = true;
+                    proc.Process?.Kill();
+                    Processes.Remove(proc);
+                    NotSaved = true;
+                    pipeServer.Write("done");
+                    Daemon.ProcessEventAsync(Daemon.DaemonEvents.ProcessDeleted, proc.Name);
+                    break;
+                }
+                case "subscribe-events":
+                {
+                    connection.Events =
+                        (DaemonEvents) ((int) connection.Events | int.Parse(packet.Data));
+                    pipeServer.Write("done");
+                    break;
+                }
+                case "subscribe-outlog-event":
+                {
+                    connection.OutLogSubs.Add(packet.Data);
+                    pipeServer.Write("done");
+                    break;
+                }
+                case "subscribe-errlog-event":
+                {
+                    connection.ErrLogSubs.Add(packet.Data);
+                    pipeServer.Write("done");
+                    break;
+                }
+                case "get-config":
+                {
+                    var writer = new Utf8JsonWriter(pipeServer);
+                    writer.WriteStartObject();
+                    writer.WriteBoolean("LogIpc", Config.LogIpc);
+                    writer.WriteBoolean("FormatConfig", Config.FormatConfig);
+                    writer.WriteNumber("MaxRestarts", Config.MaxRestarts);
+                    writer.WriteBoolean("LogProcessOutput", Config.LogProcessOutput);
+                    writer.WriteEndObject();
+                    writer.Flush();
+                    break;
+                }
+                case "set-config":
+                {
+                    var name = packet.Data[..packet.Data.IndexOf(':')];
+                    var value = packet.Data[(packet.Data.IndexOf(':') + 1)..];
+                    var property = typeof(Config).GetPropertyCaseInsensitive(name);
+                    if (property == null)
+                    {
+                        pipeServer.Write("Option not found.");
+                        return;
+                    }
+
+                    if (property!.PropertyType == typeof(bool))
+                        property.SetValue(Config, bool.Parse(value));
+                    else if (property.PropertyType == typeof(int))
+                        property.SetValue(Config, int.Parse(value));
+                    pipeServer.Write("done");
+                    NotSaved = true;
+                    break;
+                }
+
+                case "flush-all-logs":
+                    foreach (var proc in Processes)
+                    {
+                        proc.OutWriter?.Flush();
+                        proc.ErrWriter?.Flush();
+                    }
+
+                    pipeServer.Write("done");
+                    break;
             }
         }
 

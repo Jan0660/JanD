@@ -133,6 +133,7 @@ namespace JanD
                         }
                         catch
                         {
+                            // will be hit if connection interrupted, rest of the code should take care of disposing...
                         }
                     }
                 }
