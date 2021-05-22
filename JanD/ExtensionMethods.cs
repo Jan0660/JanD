@@ -1,6 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO.Pipes;
+using System.Linq;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using DaemonEvents = JanD.Daemon.DaemonEvents;
@@ -63,5 +66,10 @@ namespace JanD
                 return false;
             }
         }
+
+
+        public static PropertyInfo GetPropertyCaseInsensitive(this Type type, string str)
+            => type.GetProperties(BindingFlags.Instance | BindingFlags.Public)
+                .FirstOrDefault(p => p.Name.ToLower() == str);
     }
 }

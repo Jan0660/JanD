@@ -412,8 +412,7 @@ namespace JanD
                     {
                         var config = client.RequestJson<Config>("get-config", "");
                         var type = config.GetType();
-                        var property = type.GetProperties(BindingFlags.Instance | BindingFlags.Public)
-                            .FirstOrDefault(p => p.Name.ToLower() == args[1]);
+                        var property = type.GetPropertyCaseInsensitive(args[1]);
                         if (property != null)
                         {
                             Console.WriteLine(property.GetValue(config)!.ToString());

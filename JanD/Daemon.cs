@@ -314,6 +314,7 @@ namespace JanD
                                         writer.WriteBoolean("LogIpc", Config.LogIpc);
                                         writer.WriteBoolean("FormatConfig", Config.FormatConfig);
                                         writer.WriteNumber("MaxRestarts", Config.MaxRestarts);
+                                        writer.WriteBoolean("LogProcessOutput", Config.LogProcessOutput);
                                         writer.WriteEndObject();
                                         writer.Flush();
                                         break;
@@ -322,8 +323,12 @@ namespace JanD
                                     {
                                         var name = packet.Data[..packet.Data.IndexOf(':')];
                                         var value = packet.Data[(packet.Data.IndexOf(':') + 1)..];
-                                        var property = Config.GetType().GetProperty(name,
-                                            BindingFlags.Public | BindingFlags.Instance);
+                                        var property = typeof(Config).GetPropertyCaseInsensitive(name);
+                                        if (property == null)
+                                        {
+                                            pipeServer.Write("Option not found.");
+                                            return;
+                                        }
                                         if (property!.PropertyType == typeof(bool))
                                             property.SetValue(Config, bool.Parse(value));
                                         else if (property.PropertyType == typeof(int))

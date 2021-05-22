@@ -27,6 +27,9 @@ namespace JanD
 
         [Description("Maximum non-zero exit code restarts.")]
         public int MaxRestarts { get; set; } = 15;
+
+        [Description("Logs process output to daemon's stdout.")]
+        public bool LogProcessOutput { get; set; } = true;
     }
 
     public class JanDProcess
@@ -110,7 +113,8 @@ namespace JanD
                     OutWriter.Write(str);
                 if (whichStd == "err")
                     ErrWriter.Write(str);
-                Console.Write(str);
+                if(Daemon.Config.LogProcessOutput)
+                    Console.Write(str);
                 foreach (var con in Daemon.Connections.Where(c =>
                     c.Events.HasFlag((whichStd == "out" ? Daemon.DaemonEvents.OutLog : Daemon.DaemonEvents.ErrLog))))
                 {
