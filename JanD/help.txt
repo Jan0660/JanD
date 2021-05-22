@@ -18,4 +18,6 @@ Commands:
     startup                                  Generate a SystemD service file.
     flush                                    Ensure all logs are written to disk.
     rename <currentName> <newName>           Rename a process.
+    config                                   View configuration options.
+    config <option> <value>                  Set configuration option.
     help                                     Show this text.
