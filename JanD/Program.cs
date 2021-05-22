@@ -166,6 +166,7 @@ namespace JanD
                     }
 
                     NotSavedCheck(status);
+                    DaemonVersionCheck(status);
 
                     break;
                 }
