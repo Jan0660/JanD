@@ -127,7 +127,7 @@ namespace JanD
                             }
                             catch
                             {
-                                Console.ForegroundColor = ConsoleColor.Red;
+                                Console.ForegroundColor = ConsoleColor.DarkRed;
                                 Console.Write("ERR");
                                 Console.ResetColor();
                                 goto InvalidPid;
@@ -402,7 +402,7 @@ namespace JanD
                         }
                         else
                         {
-                            Console.BackgroundColor = ConsoleColor.Red;
+                            Console.BackgroundColor = ConsoleColor.DarkRed;
                             Console.WriteLine("Setting option failed.");
                             Console.ResetColor();
                             Console.WriteLine(res);
@@ -472,6 +472,16 @@ namespace JanD
             {
                 Console.ForegroundColor = ConsoleColor.DarkRed;
                 Console.WriteLine("Process list or configuration not saved, use the `save` command to save it.");
+                Console.ResetColor();
+            }
+        }
+
+        public static void DaemonVersionCheck(DaemonStatus status)
+        {
+            if (ThisAssembly.Info.Version != status.Version)
+            {
+                Console.ForegroundColor = ConsoleColor.DarkRed;
+                Console.WriteLine("Daemon is running an outdated version of JanD: " + status.Version);
                 Console.ResetColor();
             }
         }

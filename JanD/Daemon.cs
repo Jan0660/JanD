@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -130,6 +128,7 @@ namespace JanD
                                         j.WriteNumber("Processes", Processes.Count);
                                         j.WriteBoolean("NotSaved", NotSaved);
                                         j.WriteString("Directory", Directory.GetCurrentDirectory());
+                                        j.WriteString("Version", ThisAssembly.Info.Version);
                                         j.WriteEndObject();
                                         j.Flush();
                                         break;
@@ -464,5 +463,6 @@ namespace JanD
         public int Processes { get; set; }
         public bool NotSaved { get; set; }
         public string Directory { get; set; }
+        public string Version { get; set; }
     }
 }
