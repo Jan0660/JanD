@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -18,54 +19,62 @@ namespace JanD.DiscordWebhook
                                        JanD.Program.DefaultPipeName);
             eventClient.RequestString("subscribe-events", "255");
             byte[] bytes = new byte[10_000];
-            while (true)
+            AsyncCallback callback = null;
+            callback = state =>
             {
-                var count = eventClient.Stream.Read(bytes, 0, bytes.Length);
-                var ev = JsonSerializer.Deserialize<IpcClient.DaemonClientEvent>(bytes[..count]);
-                JanD.Program.JanDRuntimeProcess info;
-                try
+                Task.Factory.StartNew(() =>
                 {
-                    info = client.RequestJson<JanD.Program.JanDRuntimeProcess>("get-process-info", ev.Process);
-                }
-                catch
-                {
-                    info = null;
-                }
-
-                discord.SendMessageAsync(embeds: new List<DiscordEmbed>
-                {
-                    new()
+                    var count = eventClient.Stream.EndRead(state);
+                    var ev = JsonSerializer.Deserialize<IpcClient.DaemonClientEvent>(bytes[..count]);
+                    JanD.Program.JanDRuntimeProcess info;
+                    try
                     {
-                        Title = ev!.Event switch
+                        info = client.RequestJson<JanD.Program.JanDRuntimeProcess>("get-process-info", ev.Process);
+                    }
+                    catch
+                    {
+                        info = null;
+                    }
+
+                    discord.SendMessageAsync(embeds: new List<DiscordEmbed>
+                    {
+                        new()
                         {
-                            "procstart" => "Process Started",
-                            "procdel" => "Process Deleted",
-                            "procadd" => "Process Added",
-                            "procstop" => "Process Stopped",
-                            _ => ev.Event
-                        },
-                        Description = ev.Event switch
-                        {
-                            "procstart" => $"`{ev.Process}` has started.",
-                            "procdel" => $"`{ev.Process}` has been deleted.",
-                            "procadd" => @$"`{ev.Process}` has been added.
+                            Title = ev!.Event switch
+                            {
+                                "procstart" => "Process Started",
+                                "procdel" => "Process Deleted",
+                                "procadd" => "Process Added",
+                                "procstop" => "Process Stopped",
+                                _ => ev.Event
+                            },
+                            Description = ev.Event switch
+                            {
+                                "procstart" => $"`{ev.Process}` has started.",
+                                "procdel" => $"`{ev.Process}` has been deleted.",
+                                "procadd" => @$"`{ev.Process}` has been added.
         **Command:** `{info.Command}`
         **Directory:** `{info.WorkingDirectory}`",
-                            "procstop" => @$"`{ev.Process}` has stopped.
+                                "procstop" => @$"`{ev.Process}` has stopped.
         **Exit Code:** `{info.ExitCode}`",
-                            _ => ev.Process
-                        },
-                        Color = ev.Event switch
-                        {
-                            "procstart" => 0x002ECC71,
-                            "procdel" => 0x00E74C3C,
-                            "procadd" => 0x003498DB,
-                            "procstop" => 0x00E74C3C,
-                            _ => 0x002F3136
+                                _ => ev.Process
+                            },
+                            Color = ev.Event switch
+                            {
+                                "procstart" => 0x002ECC71,
+                                "procdel" => 0x00E74C3C,
+                                "procadd" => 0x003498DB,
+                                "procstop" => 0x00E74C3C,
+                                _ => 0x002F3136
+                            }
                         }
-                    }
+                    });
+                    eventClient.Stream.BeginRead(bytes, 0, bytes.Length, callback, client.Stream);
                 });
-            }
+            };
+            eventClient.Stream.BeginRead(bytes, 0, bytes.Length, callback, client.Stream);
+
+            await Task.Delay(-1);
         }
     }
 
