@@ -264,13 +264,20 @@ namespace JanD
                     void TailLog(string whichStd, int lineCount = 15)
                     {
                         Console.WriteLine($"Getting last 15 lines of std{whichStd} logs...");
-                        var fs = new FileStream(Path.Combine(status.Directory, "logs/" + args[1] + $"-{whichStd}.log"),
+                        var filename = Path.Combine(status.Directory, "logs/" + args[1] + $"-{whichStd}.log");
+                        if (!File.Exists(filename))
+                        {
+                            Console.WriteLine("Log files not found.");
+                            Environment.Exit(1);
+                        }
+                        var fs = new FileStream(filename,
                             FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
                         var reader = new StreamReader(fs);
                         var lines = reader.Tail(lineCount);
                         reader.Close();
                         foreach (var line in lines)
                             Console.WriteLine(line);
+                        Console.ResetColor();
                     }
 
                     if (events.HasFlag(Daemon.DaemonEvents.OutLog))
