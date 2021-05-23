@@ -75,7 +75,8 @@ namespace JanD
 
             void NewPipeServer()
             {
-                var pipeServer = new NamedPipeServerStream(Program.PipeName, PipeDirection.InOut, 250);
+                var pipeServer = new NamedPipeServerStream(Program.PipeName, PipeDirection.InOut, 250,
+                    OperatingSystem.IsWindows() ? PipeTransmissionMode.Message : PipeTransmissionMode.Byte);
                 // pipeServer.ReadMode = PipeTransmissionMode.Message;
                 pipeServer.BeginWaitForConnection(state =>
                     {
@@ -413,9 +414,13 @@ namespace JanD
                     writer.WriteString("Process", processName);
                     writer.WriteEndObject();
                     await writer.FlushAsync();
+                    // Says this is only supported on W*ndows but works on my (Arch btw) Linux machine????
+                    if(OperatingSystem.IsLinux())
+                        connection.Stream.WaitForPipeDrain();
                 }
                 catch
                 {
+                    // connection interrupted, rest of the code will handle the cleanup...
                 }
             }
         }

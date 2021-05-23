@@ -5,6 +5,8 @@ A process manager made in C# with NativeAOT in mind.
 # Usage
 See [the output of the help command](/JanD/help.txt). For other documentations see [Docs.md](Docs.md),
 # Installation
+## GNU/Linux
+Binaries are available under the [newest release](https://github.com/Jan0660/JanD/releases).
 ## Arch Linux
 An [AUR package](https://aur.archlinux.org/packages/jand-git/) for compiling from source is available on AUR. Just install `jand-git` using your favorite AUR client.
 ## Compiling from source
