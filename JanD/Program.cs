@@ -165,8 +165,7 @@ namespace JanD
                         Console.WriteLine();
                     }
 
-                    NotSavedCheck(status);
-                    DaemonVersionCheck(status);
+                    DoChecks(status);
 
                     break;
                 }
@@ -244,7 +243,9 @@ namespace JanD
                     var status = client.GetStatus();
                     Info("Directory", status.Directory);
                     Info("Processes", status.Processes.ToString());
-                    NotSavedCheck(status);
+                    InfoBool("NotSaved", status.NotSaved);
+                    Info("Version", status.Version);
+                    DoChecks(client);
                     break;
                 }
                 case "logs":
@@ -270,6 +271,7 @@ namespace JanD
                             Console.WriteLine("Log files not found.");
                             Environment.Exit(1);
                         }
+
                         var fs = new FileStream(filename,
                             FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
                         var reader = new StreamReader(fs);
@@ -406,7 +408,7 @@ namespace JanD
                             Console.Write(val);
                             Console.ResetColor();
                             Console.WriteLine(".");
-                            NotSavedCheck(client.GetStatus());
+                            DoChecks(client);
                         }
                         else
                         {
@@ -472,6 +474,14 @@ namespace JanD
                 Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine((value ? "true" : "false"));
             Console.ResetColor();
+        }
+
+        public static void DoChecks(IpcClient client) => DoChecks(client.GetStatus());
+
+        public static void DoChecks(DaemonStatus status)
+        {
+            NotSavedCheck(status);
+            DaemonVersionCheck(status);
         }
 
         public static void NotSavedCheck(DaemonStatus status)
