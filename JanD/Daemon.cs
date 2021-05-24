@@ -197,6 +197,7 @@ namespace JanD
                     proc.Name = val2;
                     NotSaved = true;
                     pipeServer.Write("done");
+                    ProcessEventAsync(DaemonEvents.ProcessRenamed, val1, val2);
                     break;
                 }
                 case "set-enabled":
@@ -400,7 +401,7 @@ namespace JanD
             }
         }
 
-        public static async Task ProcessEventAsync(DaemonEvents daemonEvent, string processName)
+        public static async Task ProcessEventAsync(DaemonEvents daemonEvent, string processName, string data = null)
         {
             foreach (var connection in Connections)
             {
@@ -412,10 +413,12 @@ namespace JanD
                     writer.WriteStartObject();
                     writer.WriteString("Event", daemonEvent.ToIpcString());
                     writer.WriteString("Process", processName);
+                    if(data != null)
+                        writer.WriteString("Data", data);
                     writer.WriteEndObject();
                     await writer.FlushAsync();
                     // Says this is only supported on W*ndows but works on my (Arch btw) Linux machine????
-                    if(OperatingSystem.IsLinux())
+                    if (OperatingSystem.IsLinux())
                         connection.Stream.WaitForPipeDrain();
                 }
                 catch
@@ -471,6 +474,8 @@ namespace JanD
 
             // procdel
             ProcessDeleted = 0b0010_0000,
+            // procren
+            ProcessRenamed = 0b0100_0000,
         }
     }
 

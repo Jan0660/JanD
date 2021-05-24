@@ -51,6 +51,7 @@ namespace JanD
                 DaemonEvents.ProcessStarted => "procstart",
                 DaemonEvents.ProcessAdded => "procadd",
                 DaemonEvents.ProcessDeleted => "procdel",
+                DaemonEvents.ProcessRenamed => "procren",
                 _ => "invalid"
             };
 
