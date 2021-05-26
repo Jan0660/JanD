@@ -183,6 +183,13 @@ namespace JanD
                         _ => Daemon.DaemonEvents.ErrLog | Daemon.DaemonEvents.OutLog
                     };
                     var client = new IpcClient();
+                    if (Environment.GetEnvironmentVariable("JAND_AUTOFLUSH") != null
+                        | Environment.GetEnvironmentVariable("JAND_AUTOFLUSH") == "1")
+                    {
+                        Console.WriteLine("Flushing logs...");
+                        Console.WriteLine(client.RequestString("flush-all-logs", ""));
+                    }
+
                     var status = client.GetStatus();
 
                     void TailLog(string whichStd, int lineCount = 15)
