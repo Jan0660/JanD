@@ -52,15 +52,14 @@ namespace JanD
                 case "up":
                 case "start":
                 {
+                    var client = new IpcClient();
                     if (args.Length == 2)
                     {
-                        var client = new IpcClient();
                         var str = client.RequestString("start-process", args[1]);
                         Console.WriteLine(str);
                     }
                     else if (args.Length > 2)
                     {
-                        var client = new IpcClient();
                         ProcessRelativePath();
                         var str = client.RequestString("new-process",
                             JsonSerializer.Serialize(new Daemon.JanDNewProcess(args[1],
@@ -69,6 +68,8 @@ namespace JanD
                         str = client.RequestString("start-process", args[1]);
                         Console.WriteLine(str);
                     }
+
+                    DoProcessListIfEnabled(client);
 
                     break;
                 }
@@ -86,86 +87,7 @@ namespace JanD
                 case "list":
                 {
                     var client = new IpcClient();
-                    var json = client.RequestString("get-processes", "");
-                    var status = client.GetStatus();
-                    var processes = JsonSerializer.Deserialize<JanDRuntimeProcess[]>(json);
-
-                    int maxNameLength = 0;
-                    foreach (var process in processes)
-                        if (process.Name.Length > maxNameLength)
-                            maxNameLength = process.Name.Length;
-                    maxNameLength = maxNameLength < 12 ? 14 : maxNameLength;
-                    var nameFormatString = $"{{0,-{maxNameLength + 2}}}";
-                    Console.Write("{0,-6}", "R|E|A");
-                    Console.Write(nameFormatString, "Name");
-                    Console.Write("{0,-5}", "↺");
-                    Console.Write("{0,-10}", "PID");
-                    Console.Write("{0,-7}", "Mem");
-                    Console.Write("{0,-7}", "Uptime");
-                    Console.Write("{0,-12}", "Cmd");
-                    Console.WriteLine();
-                    foreach (var process in processes)
-                    {
-                        Console.Write((process.Running ? TrueMark : FalseMark) + "|" +
-                                      (process.Enabled ? TrueMark : FalseMark) + "|"
-                                      + (process.AutoRestart ? TrueMark : FalseMark) + " ");
-                        Console.Write(nameFormatString, process.Name);
-                        Console.ForegroundColor = ConsoleColor.DarkGray;
-                        Console.Write("{0,-5}",
-                            process.RestartCount.ToString().Length > 3
-                                ? process.RestartCount.ToString()[..3] + '-'
-                                : process.RestartCount.ToString());
-                        Console.ForegroundColor = ConsoleColor.DarkMagenta;
-                        Console.Write("{0,-10}", process.ProcessId);
-                        Console.ResetColor();
-                        if (process.ProcessId != -1 && !process.Stopped)
-                        {
-                            Process proc;
-                            try
-                            {
-                                proc = Process.GetProcessById(process.ProcessId);
-                            }
-                            catch
-                            {
-                                Console.ForegroundColor = ConsoleColor.DarkRed;
-                                Console.Write("ERR");
-                                Console.ResetColor();
-                                goto InvalidPid;
-                            }
-
-                            // Mem
-                            var mem = proc.WorkingSet64;
-                            string memString = mem switch
-                            {
-                                > (int) 1e9 => (mem / (int) 1e9) + "GB",
-                                > (int) 1e6 => (mem / (int) 1e6) + "MB",
-                                > (int) 1e3 => (mem / (int) 1e3) + "KB",
-                                _ => mem.ToString()
-                            };
-                            Console.Write("{0,-7}", memString);
-                            // Uptime
-                            var uptime = (DateTime.Now - proc.StartTime);
-                            string uptimeString = uptime.TotalSeconds switch
-                            {
-                                >= (86_400 * 2) => Math.Floor(uptime.TotalMinutes / 60 / 24) + "D",
-                                >= 3_600 => Math.Floor(uptime.TotalMinutes / 60) + "h",
-                                >= 60 => Math.Floor(uptime.TotalMinutes) + "m",
-                                _ => Math.Floor(uptime.TotalSeconds) + "s"
-                            };
-                            Console.ForegroundColor = ConsoleColor.DarkGray;
-                            Console.Write("{0,-7}", uptimeString);
-                            // Cmd
-                            Console.ForegroundColor = ConsoleColor.DarkGreen;
-                            Console.Write("{0,-12}", proc.ProcessName);
-                            Console.ResetColor();
-                        }
-
-                        InvalidPid: ;
-
-                        Console.WriteLine();
-                    }
-
-                    DoChecks(status);
+                    DoProcessList(client);
 
                     break;
                 }
@@ -212,6 +134,7 @@ namespace JanD
                         JsonSerializer.Serialize(new Daemon.JanDNewProcess(args[1],
                             String.Join(' ', args[2..]), Directory.GetCurrentDirectory())));
                     Console.WriteLine(str);
+                    DoProcessListIfEnabled(client);
                     break;
                 }
                 case "write-daemon":
@@ -310,6 +233,7 @@ namespace JanD
                     var client = new IpcClient();
                     var str = client.RequestString("delete-process", args[1]);
                     Console.WriteLine(str);
+                    DoProcessListIfEnabled(client);
                     break;
                 }
                 case "startup":
@@ -371,6 +295,7 @@ namespace JanD
                 {
                     var client = new IpcClient();
                     Console.WriteLine(client.RequestString("rename-process", args[1] + ':' + args[2]));
+                    DoProcessListIfEnabled(client);
                     break;
                 }
                 case "config":
@@ -441,6 +366,97 @@ namespace JanD
                     Console.WriteLine("Unknown command. For a list of commands see the `help` command.");
                     return;
             }
+        }
+
+        private static void DoProcessListIfEnabled(IpcClient client)
+        {
+            var env = Environment.GetEnvironmentVariable("JAND_PROCESS_LIST");
+            if (env == null | env == "1")
+                DoProcessList(client);
+        }
+
+        private static void DoProcessList(IpcClient client)
+        {
+            var json = client.RequestString("get-processes", "");
+            var status = client.GetStatus();
+            var processes = JsonSerializer.Deserialize<JanDRuntimeProcess[]>(json);
+
+            int maxNameLength = 0;
+            foreach (var process in processes)
+                if (process.Name.Length > maxNameLength)
+                    maxNameLength = process.Name.Length;
+            maxNameLength = maxNameLength < 12 ? 14 : maxNameLength;
+            var nameFormatString = $"{{0,-{maxNameLength + 2}}}";
+            Console.Write("{0,-6}", "R|E|A");
+            Console.Write(nameFormatString, "Name");
+            Console.Write("{0,-5}", "↺");
+            Console.Write("{0,-10}", "PID");
+            Console.Write("{0,-7}", "Mem");
+            Console.Write("{0,-7}", "Uptime");
+            Console.Write("{0,-12}", "Cmd");
+            Console.WriteLine();
+            foreach (var process in processes)
+            {
+                Console.Write((process.Running ? TrueMark : FalseMark) + "|" +
+                              (process.Enabled ? TrueMark : FalseMark) + "|"
+                              + (process.AutoRestart ? TrueMark : FalseMark) + " ");
+                Console.Write(nameFormatString, process.Name);
+                Console.ForegroundColor = ConsoleColor.DarkGray;
+                Console.Write("{0,-5}",
+                    process.RestartCount.ToString().Length > 3
+                        ? process.RestartCount.ToString()[..3] + '-'
+                        : process.RestartCount.ToString());
+                Console.ForegroundColor = ConsoleColor.DarkMagenta;
+                Console.Write("{0,-10}", process.ProcessId);
+                Console.ResetColor();
+                if (process.ProcessId != -1 && !process.Stopped)
+                {
+                    Process proc;
+                    try
+                    {
+                        proc = Process.GetProcessById(process.ProcessId);
+                    }
+                    catch
+                    {
+                        Console.ForegroundColor = ConsoleColor.DarkRed;
+                        Console.Write("ERR");
+                        Console.ResetColor();
+                        goto InvalidPid;
+                    }
+
+                    // Mem
+                    var mem = proc.WorkingSet64;
+                    string memString = mem switch
+                    {
+                        > (int) 1e9 => (mem / (int) 1e9) + "GB",
+                        > (int) 1e6 => (mem / (int) 1e6) + "MB",
+                        > (int) 1e3 => (mem / (int) 1e3) + "KB",
+                        _ => mem.ToString()
+                    };
+                    Console.Write("{0,-7}", memString);
+                    // Uptime
+                    var uptime = (DateTime.Now - proc.StartTime);
+                    string uptimeString = uptime.TotalSeconds switch
+                    {
+                        >= (86_400 * 2) => Math.Floor(uptime.TotalMinutes / 60 / 24) + "D",
+                        >= 3_600 => Math.Floor(uptime.TotalMinutes / 60) + "h",
+                        >= 60 => Math.Floor(uptime.TotalMinutes) + "m",
+                        _ => Math.Floor(uptime.TotalSeconds) + "s"
+                    };
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.Write("{0,-7}", uptimeString);
+                    // Cmd
+                    Console.ForegroundColor = ConsoleColor.DarkGreen;
+                    Console.Write("{0,-12}", proc.ProcessName);
+                    Console.ResetColor();
+                }
+
+                InvalidPid: ;
+
+                Console.WriteLine();
+            }
+
+            DoChecks(status);
         }
 
         public static void LogDescription(PropertyInfo property)
