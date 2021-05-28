@@ -1,5 +1,5 @@
 # JanD Documentation
-(up to date as of v0.4.3, lacking documentation for commands and IPC events)
+(up to date as of v0.5.1, lacking documentation for commands and IPC events)
 ## Configuration
 The `JAND_PIPE` environment variable chooses the name of the IPC pipe for communication between the daemon and the CLI. By default it is `jand`.
 
@@ -69,7 +69,48 @@ An array of [RuntimeProcessInfo](#RuntimeProcessInfo).
 Kill a process and delete it.
 ###### Response
 `done`
-### IPC Objects
+### `subscribe-events`
+Subscribe to events over IPC using a bitfield of events [DaemonEvents](#DaemonEvents).
+###### Data
+The events you want to subscribe to represented as a number. The events will be automatically added onto your already subscribed events using a bit-wise/binary OR operation.
+###### Response
+`done`
+### `subscribe-outlog-event`
+Subscribe to stdout log events for a process.
+###### Data
+The process' name
+###### Response
+`done`
+###### `subscribe-errlog-event`
+Subscribe to stderr log events for a process.
+###### Data
+The process' name
+###### Response
+`done`
+### `get-config`
+Get daemon configuration.
+###### Response
+```json
+{
+	"LogIpc": true,
+	"FormatConfig": true,
+	"MaxRestarts": 15,
+	"LogProcessOutput": true
+}
+```
+### `set-config`
+Set daemon configuration.
+(to be changed)
+###### Data
+`option:value`
+###### Response
+ - `Option not found.`
+ - `done`
+### `flush-all-logs`
+Ensure all logs are written to disk.
+###### Response
+`done`
+## IPC Objects
 #### ProcessInfo
 ```json
 {
@@ -100,5 +141,27 @@ Kill a process and delete it.
 	"Name": "jand",
 	"Command": "/usr/bin/jand start-daemon",
 	"WorkingDirectory": "/etc/jand"
+}
+```
+#### DaemonEvents
+The coments represent their name when given over IPC.
+```csharp
+[Flags]
+public enum DaemonEvents
+{
+    // outlog
+    OutLog = 0b0000_0001,
+    // errlog
+    ErrLog = 0b0000_0010,
+    // procstop
+    ProcessStopped = 0b0000_0100,
+    // procstart
+    ProcessStarted = 0b0000_1000,
+    // procadd
+    ProcessAdded = 0b0001_0000,
+    // procdel
+    ProcessDeleted = 0b0010_0000,
+    // procren
+    ProcessRenamed = 0b0100_0000,
 }
 ```
