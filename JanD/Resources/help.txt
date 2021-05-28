@@ -1,12 +1,13 @@
 Commands:
-    start <name> <executable> <args[]>       Create a new process and start it.
+    up, start <name> <executable> <args[]>   Create a new process and start it.
     new <name> <executable> <args[]>         Create a new process.
     enable <name>                            Enable a process to start when JanD starts.
     disable <name>                           Disable a process from starting when JanD starts.
     list, ls, l                              List current processes.
     stop <name>                              Stop a process.
     restart <name>                           Restart a process.
-    info <name>                              Get info about a process.
+    i, info                                  Show JanD information.
+    i, info <name>                           Get info about a process.
     kill                                     Stop all processes (and their children) and then kill JanD.
     save                                     Save JanD processes and configuration.
     start-daemon                             The command used for starting the daemon.
@@ -14,8 +15,8 @@ Commands:
     logs <name>                              View the last 15 lines of stdout and stderr logs for a process and watch for new logs.
     outlogs <name>                           View the last 15 lines of stdout logs for a process and watch for new stdout logs.
     errlogs <name>                           View the last 15 lines of stderr logs for a process and watch for new stderr logs.
-    delete <name>                            Delete a process.
-    startup                                  Generate a SystemD service file.
+    rm, delete <name>                        Delete a process.
+    startup                                  Generate a SystemD or runit service file.
     flush                                    Ensure all logs are written to disk.
     rename <currentName> <newName>           Rename a process.
     config                                   View configuration options.

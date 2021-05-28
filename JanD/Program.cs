@@ -328,7 +328,7 @@ Or you can contribute on GitHub!");
                 case "-help":
                 case "--help":
                 {
-                    Console.WriteLine(GetResourceString("info.txt"), TextLogo);
+                    Console.Write(GetResourceString("info.txt"), TextLogo);
                     Console.WriteLine(GetResourceString("help.txt"));
 
                     break;
