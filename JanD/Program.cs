@@ -22,6 +22,7 @@ namespace JanD
         public static string PipeName;
         public const string TrueMark = "[38;2;0;255;0m√[0m";
         public const string FalseMark = "[38;2;255;0;0mx[0m";
+        public const string TextLogo = "[1m[38;2;216;160;223m[[22m[38;2;0;255;255mJanD[38;2;216;160;223m[1m][22m[39m";
 
         static async Task Main(string[] args)
         {
@@ -109,20 +110,27 @@ namespace JanD
                 case "i":
                 case "info":
                 {
-                    var client = new IpcClient();
-                    var proc = JsonSerializer.Deserialize<JanDRuntimeProcess>(
-                        client.RequestString("get-process-info", args[1]));
+                    if (args.Length == 1)
+                    {
+                        Console.WriteLine(GetResourceString("info.txt"), TextLogo);
+                    }
+                    else
+                    {
+                        var client = new IpcClient();
+                        var proc = JsonSerializer.Deserialize<JanDRuntimeProcess>(
+                            client.RequestString("get-process-info", args[1]));
 
-                    Console.WriteLine(proc.Name);
-                    Info("Command", proc.Command);
-                    Info("WorkingDirectory", proc.WorkingDirectory);
-                    Info("PID", proc.ProcessId.ToString());
-                    Info("ExitCode", proc.ExitCode.ToString());
-                    Info("RestartCount", proc.RestartCount.ToString());
-                    InfoBool("Stopped", proc.Stopped);
-                    InfoBool("Enabled", proc.Enabled);
-                    InfoBool("AutoRestart", proc.AutoRestart);
-                    InfoBool("Running", proc.Running);
+                        Console.WriteLine(proc.Name);
+                        Info("Command", proc.Command);
+                        Info("WorkingDirectory", proc.WorkingDirectory);
+                        Info("PID", proc.ProcessId.ToString());
+                        Info("ExitCode", proc.ExitCode.ToString());
+                        Info("RestartCount", proc.RestartCount.ToString());
+                        InfoBool("Stopped", proc.Stopped);
+                        InfoBool("Enabled", proc.Enabled);
+                        InfoBool("AutoRestart", proc.AutoRestart);
+                        InfoBool("Running", proc.Running);
+                    }
                     break;
                 }
                 case "add":
@@ -320,6 +328,7 @@ Or you can contribute on GitHub!");
                 case "-help":
                 case "--help":
                 {
+                    Console.WriteLine(GetResourceString("info.txt"), TextLogo);
                     Console.WriteLine(GetResourceString("help.txt"));
 
                     break;

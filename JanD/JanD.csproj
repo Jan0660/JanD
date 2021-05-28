@@ -30,6 +30,7 @@
     </ItemGroup>
     <ItemGroup>
         <RdXmlFile Include="rd.xml" />
+        <EmbeddedResource Include="Resources/info.txt" />
         <EmbeddedResource Include="Resources/help.txt" />
         <EmbeddedResource Include="Resources/runit-run" />
         <EmbeddedResource Include="Resources/runit-conf-template" />
