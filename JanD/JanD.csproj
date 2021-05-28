@@ -30,9 +30,9 @@
     </ItemGroup>
     <ItemGroup>
         <RdXmlFile Include="rd.xml" />
-        <EmbeddedResource Include="help.txt" />
-        <EmbeddedResource Include="runit-run" />
-        <EmbeddedResource Include="runit-conf-template" />
-        <EmbeddedResource Include="systemd-template.service" />
+        <EmbeddedResource Include="Resources/help.txt" />
+        <EmbeddedResource Include="Resources/runit-run" />
+        <EmbeddedResource Include="Resources/runit-conf-template" />
+        <EmbeddedResource Include="Resources/systemd-template.service" />
     </ItemGroup>
 </Project>

@@ -3,7 +3,7 @@
 
 A process manager made in C# with NativeAOT in mind.
 # Usage
-See [the output of the help command](/JanD/help.txt). For other documentations see [Docs.md](Docs.md),
+See [the output of the help command](/JanD/Resources/help.txt). For other documentations see [Docs.md](Docs.md),
 # Installation
 ## GNU/Linux
 Binaries are available under the [newest release](https://github.com/Jan0660/JanD/releases).

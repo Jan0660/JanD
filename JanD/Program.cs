@@ -594,7 +594,7 @@ Or you can contribute on GitHub!");
         {
             var assembly = System.Reflection.Assembly.GetExecutingAssembly();
 
-            using (Stream stream = assembly.GetManifestResourceStream("JanD." + name))
+            using (Stream stream = assembly.GetManifestResourceStream("JanD.Resources." + name))
             using (StreamReader reader = new StreamReader(stream))
             {
                 return reader.ReadToEnd();
