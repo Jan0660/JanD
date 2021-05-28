@@ -344,6 +344,13 @@ namespace JanD
                     pipeServer.Write("done");
                     break;
                 }
+                case "unsubscribe-events":
+                {
+                    connection.Events =
+                        (DaemonEvents) ((int) connection.Events ^ int.Parse(packet.Data));
+                    pipeServer.Write("done");
+                    break;
+                }
                 case "subscribe-outlog-event":
                 {
                     connection.OutLogSubs.Add(packet.Data);
