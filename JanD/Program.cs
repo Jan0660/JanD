@@ -369,6 +369,15 @@ namespace JanD
 
                     break;
                 }
+                case "raw-request":
+                {
+                    var client = new IpcClient();
+                    var type = args[1];
+                    var data = string.Join(' ', args[2..]);
+                    Console.WriteLine($"Sending request: Type: `{type}`; Data: `{data}`");
+                    Console.WriteLine(client.RequestString(type, data));
+                    break;
+                }
                 default:
                     Console.WriteLine("Unknown command. For a list of commands see the `help` command.");
                     return;

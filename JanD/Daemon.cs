@@ -77,7 +77,6 @@ namespace JanD
             {
                 var pipeServer = new NamedPipeServerStream(Program.PipeName, PipeDirection.InOut, 250,
                     OperatingSystem.IsWindows() ? PipeTransmissionMode.Message : PipeTransmissionMode.Byte);
-                // pipeServer.ReadMode = PipeTransmissionMode.Message;
                 pipeServer.BeginWaitForConnection(state =>
                     {
                         if (Config.LogIpc)

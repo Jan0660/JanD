@@ -19,7 +19,8 @@ Gets daemon status.
 {
     "Processes": 10,
     "NotSaved": true,
-    "Directory": "/etc/jand"
+    "Directory": "/etc/jand",
+	"Version": "0.5.1"
 }
 ```
 ### `exit`
