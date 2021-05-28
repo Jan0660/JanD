@@ -247,26 +247,69 @@ namespace JanD
                 {
                     if (!OperatingSystem.IsLinux())
                     {
-                        Console.WriteLine("SystemD startup services are only available on Linux with SystemD.");
+                        Console.WriteLine("Startup services are only available on Linux with SystemD or runit.");
                         return;
                     }
 
                     if (getuid() != 0 || args.Length == 1)
                     {
-                        Console.WriteLine("Run the following command as root to install the SystemD service file:");
+                        Console.WriteLine("Run the following command as root to install the service file:");
                         Console.WriteLine(
                             $"{Environment.GetCommandLineArgs()[0]} startup {Environment.UserName} {Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".jand")}");
                     }
                     else
                     {
-                        var service = GetResourceString("systemd-template.service");
-                        service = String.Format(service, args[1], Environment.GetEnvironmentVariable("PATH"), args[2],
-                            PipeName, Process.GetCurrentProcess().MainModule?.FileName ?? "jand");
-                        var location = "/etc/systemd/system/jand-" + args[1] + ".service";
-                        File.WriteAllText(location, service);
-                        Console.WriteLine($"SystemD service file installed in {location}");
-                        Console.WriteLine("Enable and start the service using the following command:");
-                        Console.WriteLine($"systemctl enable --now jand-{args[1]}");
+                        var pid1 = Process.GetProcessById(1);
+                        switch (pid1.ProcessName)
+                        {
+                            case "systemd":
+                            {
+                                Console.WriteLine("Detected SystemD...");
+                                var service = GetResourceString("systemd-template.service");
+                                service = String.Format(service, args[1], Environment.GetEnvironmentVariable("PATH"),
+                                    args[2],
+                                    PipeName, Process.GetCurrentProcess().MainModule?.FileName ?? "jand");
+                                var location = "/etc/systemd/system/jand-" + args[1] + ".service";
+                                File.WriteAllText(location, service);
+                                Console.WriteLine($"SystemD service file installed in {location}");
+                                Console.WriteLine("Enable and start the service using the following command:");
+                                Console.WriteLine($"systemctl enable --now jand-{args[1]}");
+                                break;
+                            }
+                            case "runit":
+                            {
+                                Console.WriteLine("Detected runit...");
+                                // check for Artix's folder structure
+                                if (Directory.Exists("/etc/runit/sv"))
+                                {
+                                    Console.WriteLine("Detected Artix's folder structure.");
+                                    var path = $"/etc/runit/sv/jand-{args[1]}";
+                                    Console.WriteLine("Creating..");
+                                    Directory.CreateDirectory(path);
+                                    File.WriteAllText($"{path}/run",
+                                        String.Format(GetResourceString("runit-run"),
+                                            Process.GetCurrentProcess().MainModule?.FileName ?? "jand"));
+                                    File.WriteAllText($"{path}/conf",
+                                        String.Format(GetResourceString("runit-conf-template"), args[1], args[2]));
+                                    Console.WriteLine($"Installed service file in {path}");
+                                    Process.Start("chmod", $"755 \"{path}/run\"")!.WaitForExit();
+                                    Process.Start("chmod", $"755 \"{path}/conf\"")!.WaitForExit();
+                                    if (File.Exists("/usr/share/libalpm/scripts/runit-hook"))
+                                        Process.Start("/usr/share/libalpm/scripts/runit-hook", "add")!.WaitForExit();
+                                }
+                                else
+                                    Console.WriteLine("Unknown folder structure.");
+
+                                break;
+                            }
+                            default:
+                            {
+                                Console.WriteLine(
+                                    @"Unknown init. If you are using OpenRC or s6 please wait for support to be added.
+Or you can contribute on GitHub!");
+                                break;
+                            }
+                        }
                     }
 
                     break;

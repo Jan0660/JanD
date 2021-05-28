@@ -20,17 +20,19 @@
     <ItemGroup>
         <PackageReference Condition="'$(RuntimeIdentifier)' != 'linux-arm'" Include="Microsoft.DotNet.ILCompiler" Version="6.0.0-*" />
         <PackageReference Condition="'$(RuntimeIdentifier)' == 'linux-arm64'" Include="runtime.linux-x64.Microsoft.DotNet.ILCompiler" Version="6.0.0-*" />
-        <PackageReference Include="ThisAssembly.AssemblyInfo" Version="1.0.8"/>
+        <PackageReference Include="ThisAssembly.AssemblyInfo" Version="1.0.8" />
     </ItemGroup>
     <ItemGroup>
-        <TrimmerRootAssembly Include="JanD"/>
+        <TrimmerRootAssembly Include="JanD" />
     </ItemGroup>
     <ItemGroup>
-        <FileConstant Include="@(Content)"/>
+        <FileConstant Include="@(Content)" />
     </ItemGroup>
     <ItemGroup>
-        <RdXmlFile Include="rd.xml"/>
-        <EmbeddedResource Include="help.txt"/>
-        <EmbeddedResource Include="systemd-template.service"/>
+        <RdXmlFile Include="rd.xml" />
+        <EmbeddedResource Include="help.txt" />
+        <EmbeddedResource Include="runit-run" />
+        <EmbeddedResource Include="runit-conf-template" />
+        <EmbeddedResource Include="systemd-template.service" />
     </ItemGroup>
 </Project>
