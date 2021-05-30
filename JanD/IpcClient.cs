@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO.Pipes;
 using System.Text;
 using System.Text.Json;
@@ -9,6 +10,7 @@ namespace JanD
     {
         public NamedPipeClientStream Stream;
         public const int BufferSize = 50_000;
+
         public IpcClient(string pipeName = null)
         {
             pipeName ??= Program.PipeName;
@@ -55,6 +57,41 @@ namespace JanD
 
         public void Write(string str)
             => SendString("write", str);
+
+        [DoesNotReturn]
+        public void ListenEvents(Action<DaemonClientEvent> action)
+        {
+            byte[] bytes = new byte[100_000];
+            while (true)
+            {
+                var bytesCount = 0;
+                var inDepth = 1;
+                var firstRead = true;
+                while (inDepth != 0)
+                {
+                    var byt = Stream.ReadByte();
+                    if (byt == -1)
+                    {
+                        throw new Exception("Pipe closed.");
+                    }
+
+                    bytes[bytesCount] = (byte) byt;
+                    bytesCount++;
+                    var ch = (char) byt;
+                    if (ch == '{' && !firstRead)
+                        inDepth++;
+                    if (ch == '}')
+                    {
+                        inDepth--;
+                    }
+
+                    firstRead = false;
+                }
+
+                var ev = JsonSerializer.Deserialize<DaemonClientEvent>(bytes[..bytesCount]);
+                action(ev);
+            }
+        }
 
         public class DaemonClientEvent
         {

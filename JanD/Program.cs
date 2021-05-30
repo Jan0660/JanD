@@ -22,7 +22,9 @@ namespace JanD
         public static string PipeName;
         public const string TrueMark = "[38;2;0;255;0m√[0m";
         public const string FalseMark = "[38;2;255;0;0mx[0m";
-        public const string TextLogo = "[1m[38;2;216;160;223m[[22m[38;2;0;255;255mJanD[38;2;216;160;223m[1m][22m[39m";
+
+        public const string TextLogo =
+            "[1m[38;2;216;160;223m[[22m[38;2;0;255;255mJanD[38;2;216;160;223m[1m][22m[39m";
 
         static async Task Main(string[] args)
         {
@@ -131,6 +133,7 @@ namespace JanD
                         InfoBool("AutoRestart", proc.AutoRestart);
                         InfoBool("Running", proc.Running);
                     }
+
                     break;
                 }
                 case "add":
@@ -237,8 +240,7 @@ namespace JanD
                         client.RequestString("subscribe-outlog-event", args[1]);
                     if (events.HasFlag(Daemon.DaemonEvents.ErrLog))
                         client.RequestString("subscribe-errlog-event", args[1]);
-                    LogWatch(client);
-
+                    client.ListenEvents(ev => Console.Write(ev!.Value));
                     break;
                 }
                 case "remove":
@@ -585,17 +587,6 @@ Or you can contribute on GitHub!");
                 Console.ForegroundColor = ConsoleColor.DarkRed;
                 Console.WriteLine("Daemon is running an outdated version of JanD: " + status.Version);
                 Console.ResetColor();
-            }
-        }
-
-        public static void LogWatch(IpcClient client)
-        {
-            byte[] bytes = new byte[100_000];
-            while (true)
-            {
-                var count = client.Stream.Read(bytes, 0, bytes.Length);
-                var ev = JsonSerializer.Deserialize<IpcClient.DaemonClientEvent>(bytes[..count]);
-                Console.Write(ev!.Value);
             }
         }
 
