@@ -230,7 +230,7 @@ namespace JanD
                 {
                     var proc = GetProcess(packet.Data);
 
-                    if (proc.Process == null)
+                    if (proc.Process == null && proc.Stopped)
                     {
                         pipeServer.Write("already-stopped");
                     }

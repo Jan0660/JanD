@@ -176,17 +176,17 @@ namespace JanD
         {
             RestartCount++;
             ExitCode = Process.ExitCode;
-            Process.Dispose();
+            Process?.Dispose();
             Process = null;
         }
 
         public void Stop()
         {
             Stopped = true;
-            Process.Kill();
+            Process?.Kill();
             try
             {
-                Process.WaitForExit();
+                Process?.WaitForExit();
             }
             finally
             {
