@@ -20,6 +20,7 @@ namespace JanD.DiscordWebhook
             eventClient.RequestString("subscribe-events", "255");
             eventClient.ListenEvents(ev =>
             {
+                Console.WriteLine(ev.Event);
                 JanD.Program.JanDRuntimeProcess info;
                 try
                 {

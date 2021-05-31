@@ -80,9 +80,9 @@ namespace JanD
                 case "disable":
                 {
                     var client = new IpcClient();
-                    var response = client.RequestString("set-enabled",
-                        args[1] + ":" + (args[0].ToLower() == "disable" ? "false" : "true"));
-                    Console.WriteLine($"Enabled set to {response}.");
+                    foreach (var proc in args[1..])
+                        Console.WriteLine(proc + ": " + client.RequestString("set-enabled",
+                            args[1] + ":" + (args[0].ToLower() == "disable" ? "false" : "true")));
                     break;
                 }
                 case "l":
@@ -98,15 +98,15 @@ namespace JanD
                 case "stop":
                 {
                     var client = new IpcClient();
-                    var str = client.RequestString("stop-process", args[1]);
-                    Console.WriteLine(str);
+                    foreach (var proc in args[1..])
+                        Console.WriteLine(proc + ": " + client.RequestString("stop-process", proc));
                     break;
                 }
                 case "restart":
                 {
                     var client = new IpcClient();
-                    var str = client.RequestString("restart-process", args[1]);
-                    Console.WriteLine(str);
+                    foreach (var proc in args[1..])
+                        Console.WriteLine(proc + ": " + client.RequestString("restart-process", proc));
                     break;
                 }
                 case "i":
@@ -119,19 +119,22 @@ namespace JanD
                     else
                     {
                         var client = new IpcClient();
-                        var proc = JsonSerializer.Deserialize<JanDRuntimeProcess>(
-                            client.RequestString("get-process-info", args[1]));
+                        foreach (var process in args[1..])
+                        {
+                            var proc = JsonSerializer.Deserialize<JanDRuntimeProcess>(
+                                client.RequestString("get-process-info", process));
 
-                        Console.WriteLine(proc.Name);
-                        Info("Command", proc.Command);
-                        Info("WorkingDirectory", proc.WorkingDirectory);
-                        Info("PID", proc.ProcessId.ToString());
-                        Info("ExitCode", proc.ExitCode.ToString());
-                        Info("RestartCount", proc.RestartCount.ToString());
-                        InfoBool("Stopped", proc.Stopped);
-                        InfoBool("Enabled", proc.Enabled);
-                        InfoBool("AutoRestart", proc.AutoRestart);
-                        InfoBool("Running", proc.Running);
+                            Console.WriteLine(proc.Name);
+                            Info("Command", proc.Command);
+                            Info("WorkingDirectory", proc.WorkingDirectory);
+                            Info("PID", proc.ProcessId.ToString());
+                            Info("ExitCode", proc.ExitCode.ToString());
+                            Info("RestartCount", proc.RestartCount.ToString());
+                            InfoBool("Stopped", proc.Stopped);
+                            InfoBool("Enabled", proc.Enabled);
+                            InfoBool("AutoRestart", proc.AutoRestart);
+                            InfoBool("Running", proc.Running);
+                        }
                     }
 
                     break;
@@ -248,8 +251,8 @@ namespace JanD
                 case "delete":
                 {
                     var client = new IpcClient();
-                    var str = client.RequestString("delete-process", args[1]);
-                    Console.WriteLine(str);
+                    foreach (var proc in args[1..])
+                        Console.WriteLine(proc + ": " + client.RequestString("delete-process", proc));
                     DoProcessListIfEnabled(client);
                     break;
                 }
