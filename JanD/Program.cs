@@ -82,7 +82,7 @@ namespace JanD
                     var client = new IpcClient();
                     foreach (var proc in args[1..])
                         Console.WriteLine(proc + ": " + client.RequestString("set-enabled",
-                            args[1] + ":" + (args[0].ToLower() == "disable" ? "false" : "true")));
+                            proc + ":" + (args[0].ToLower() == "disable" ? "false" : "true")));
                     break;
                 }
                 case "l":
