@@ -16,7 +16,7 @@ namespace JanD
     {
         public JanDProcess[] Processes { get; set; }
         // When adding config options remember to add the Description attribute
-        // and check if it's type is covered in the `set-config` daemon method, `config` command
+        // and check if it's type is covered in the `SetValueString` extension method, `config` command
         // and add it to the `get-config` daemon method
 
         [Description("Log IPC requests to the daemon's stdout.")]

@@ -72,5 +72,13 @@ namespace JanD
         public static PropertyInfo GetPropertyCaseInsensitive(this Type type, string str)
             => type.GetProperties(BindingFlags.Instance | BindingFlags.Public)
                 .FirstOrDefault(p => p.Name.ToLower() == str);
+
+        public static void SetValueString(this PropertyInfo property, object obj, string value)
+        {
+            if (property!.PropertyType == typeof(bool))
+                property.SetValue(obj, bool.Parse(value));
+            else if (property.PropertyType == typeof(int))
+                property.SetValue(obj, int.Parse(value));
+        }
     }
 }

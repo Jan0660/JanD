@@ -297,7 +297,7 @@ namespace JanD
                                 {
                                     Console.WriteLine("Detected Artix's folder structure.");
                                     var path = $"/etc/runit/sv/jand-{args[1]}";
-                                    Console.WriteLine("Creating..");
+                                    Console.WriteLine("Creating...");
                                     Directory.CreateDirectory(path);
                                     File.WriteAllText($"{path}/run",
                                         String.Format(GetResourceString("runit-run"),
@@ -372,13 +372,9 @@ Or you can contribute on GitHub!");
                         foreach (var property in type.GetProperties(BindingFlags.Instance | BindingFlags.Public))
                         {
                             if (property.PropertyType == typeof(bool))
-                            {
                                 InfoBool(property.Name, (bool) property.GetValue(config)!);
-                            }
                             else if (property.PropertyType == typeof(int))
-                            {
                                 Info(property.Name, property.GetValue(config)!.ToString());
-                            }
 
                             LogDescription(property);
                         }
@@ -433,6 +429,18 @@ Or you can contribute on GitHub!");
                     var data = string.Join(' ', args[2..]);
                     Console.WriteLine($"Sending request: Type: `{type}`; Data: `{data}`");
                     Console.WriteLine(client.RequestString(type, data));
+                    break;
+                }
+                case "spp":
+                {
+                    // spp process property data...
+                    var client = new IpcClient();
+                    Console.WriteLine(client.RequestString("set-process-property", JsonSerializer.Serialize(new SetPropertyIpcPacket()
+                    {
+                        Process = args[1],
+                        Property = args[2],
+                        Data = String.Join(' ', args[3..])
+                    })));
                     break;
                 }
                 default:

@@ -28,7 +28,7 @@ namespace JanD
             if (proc == null)
             {
                 if (throwOnNotFound)
-                    throw new("invalid-process");
+                    throw new DaemonException("invalid-process");
             }
 
             return proc;
@@ -108,6 +108,10 @@ namespace JanD
                             try
                             {
                                 HandlePacket(pipeServer, bytes, count, connection);
+                            }
+                            catch (DaemonException exception)
+                            {
+                                pipeServer.Write("ERR:" + exception.Message);
                             }
                             catch (Exception exception)
                             {
@@ -212,6 +216,21 @@ namespace JanD
 
                     proc.Enabled = Boolean.Parse(packet.Data[(separatorIndex + 1)..]);
                     pipeServer.Write(proc.Enabled.ToString());
+                    NotSaved = true;
+                    break;
+                }
+                case "set-process-property":
+                {
+                    var req = JsonSerializer.Deserialize<SetPropertyIpcPacket>(packet.Data);
+                    var process = GetProcess(req!.Process);
+                    var property = typeof(JanDProcess).GetPropertyCaseInsensitive(req.Property);
+                    if (property == null)
+                    {
+                        pipeServer.Write("Invalid property.");
+                        return;
+                    }
+                    property.SetValueString(process, req.Data);
+                    pipeServer.Write("done");
                     NotSaved = true;
                     break;
                 }
@@ -386,10 +405,7 @@ namespace JanD
                         return;
                     }
 
-                    if (property!.PropertyType == typeof(bool))
-                        property.SetValue(Config, bool.Parse(value));
-                    else if (property.PropertyType == typeof(int))
-                        property.SetValue(Config, int.Parse(value));
+                    property.SetValueString(Config, value);
                     pipeServer.Write("done");
                     NotSaved = true;
                     break;
@@ -419,7 +435,7 @@ namespace JanD
                     writer.WriteStartObject();
                     writer.WriteString("Event", daemonEvent.ToIpcString());
                     writer.WriteString("Process", processName);
-                    if(data != null)
+                    if (data != null)
                         writer.WriteString("Data", data);
                     writer.WriteEndObject();
                     await writer.FlushAsync();
@@ -480,6 +496,7 @@ namespace JanD
 
             // procdel
             ProcessDeleted = 0b0010_0000,
+
             // procren
             ProcessRenamed = 0b0100_0000,
         }
@@ -491,5 +508,12 @@ namespace JanD
         public bool NotSaved { get; set; }
         public string Directory { get; set; }
         public string Version { get; set; }
+    }
+
+    public class DaemonException : Exception
+    {
+        public DaemonException(string message) : base(message)
+        {
+        }
     }
 }
