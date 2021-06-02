@@ -55,8 +55,7 @@ namespace JanD
                     var client = new IpcClient();
                     if (args.Length == 2)
                     {
-                        var str = client.RequestString("start-process", args[1]);
-                        Console.WriteLine(str);
+                        client.DoRequests(client.GetProcessNames(args[1..]), "start-process");
                     }
                     else if (args.Length > 2)
                     {
