@@ -80,7 +80,7 @@ namespace JanD
                     for (var i = 0; i < args.Length - 1; i++)
                         args[i + 1] = args[i + 1] + ":" + (args[0].ToLower() == "disable" ? "false" : "true");
 
-                    client.DoRequests(args[1..], "set-enabled");
+                    client.DoRequests(client.GetProcessNames(args[1..]), "set-enabled");
                     break;
                 }
                 case "l":
@@ -96,13 +96,13 @@ namespace JanD
                 case "stop":
                 {
                     var client = new IpcClient();
-                    client.DoRequests(args[1..], "stop-process");
+                    client.DoRequests(client.GetProcessNames(args[1..]), "stop-process");
                     break;
                 }
                 case "restart":
                 {
                     var client = new IpcClient();
-                    client.DoRequests(args[1..], "restart-process");
+                    client.DoRequests(client.GetProcessNames(args[1..]), "restart-process");
                     break;
                 }
                 case "i":
@@ -115,7 +115,7 @@ namespace JanD
                     else
                     {
                         var client = new IpcClient();
-                        foreach (var process in args[1..])
+                        foreach (var process in client.GetProcessNames(args[1..]))
                         {
                             var proc = JsonSerializer.Deserialize<JanDRuntimeProcess>(
                                 client.RequestString("get-process-info", process));
@@ -247,7 +247,7 @@ namespace JanD
                 case "delete":
                 {
                     var client = new IpcClient();
-                    client.DoRequests(args[1..], "delete-process");
+                    client.DoRequests(client.GetProcessNames(args[1..]), "delete-process");
                     DoProcessListIfEnabled(client);
                     break;
                 }

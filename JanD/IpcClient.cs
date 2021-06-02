@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO.Pipes;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace JanD
 {
@@ -68,6 +70,39 @@ namespace JanD
                 Console.Write(": ");
                 Console.WriteLine(RequestString(type, proc));
             }
+        }
+
+        public string[] GetProcessNames(string[] args)
+        {
+            string[] processNames = null;
+
+            string[] GetProcesses()
+            {
+                if (processNames != null)
+                    return processNames;
+                var processes = RequestJson<JanDProcess[]>("get-process-list", "");
+                var ls = new List<string>(processes.Length);
+                foreach (var proc in processes)
+                    ls.Add(proc.Name);
+                processNames = ls.ToArray();
+                return processNames;
+            }
+
+            var result = new List<string>();
+            foreach (var arg in args)
+            {
+                if (arg.StartsWith('/') && arg.EndsWith('/'))
+                {
+                    var rgx = new Regex(arg[1..^1]);
+                    foreach (var proc in GetProcesses())
+                        if (rgx.IsMatch(proc))
+                            result.Add(proc);
+                }
+                else
+                    result.Add(arg);
+            }
+
+            return result.ToArray();
         }
 
         [DoesNotReturn]
