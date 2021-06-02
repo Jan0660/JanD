@@ -151,7 +151,7 @@ namespace JanD
         public void WasStopped()
         {
             RestartCount++;
-            ExitCode = Process.ExitCode;
+            ExitCode = Process?.ExitCode ?? -1;
             Process?.Dispose();
             Process = null;
         }
