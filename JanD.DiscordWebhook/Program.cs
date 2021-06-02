@@ -41,6 +41,8 @@ namespace JanD.DiscordWebhook
                             "procdel" => "Process Deleted",
                             "procadd" => "Process Added",
                             "procstop" => "Process Stopped",
+                            "procren" => "Process Renamed",
+                            "procprop" => "Process Property Updated",
                             _ => ev.Event
                         },
                         Description = ev.Event switch
@@ -52,6 +54,9 @@ namespace JanD.DiscordWebhook
         **Directory:** `{info.WorkingDirectory}`",
                             "procstop" => @$"`{ev.Process}` has stopped.
         **Exit Code:** `{info.ExitCode}`",
+                            "procren" => $@"`{ev.Process}` => `{ev.Value}`",
+                            "procprop" => $@"`{ev.Process}`
+Property `{ev.Value[..ev.Value.IndexOf(':')]}` changed to `{ev.Value[(ev.Value.IndexOf(':') + 1)..]}`",
                             _ => ev.Process
                         },
                         Color = ev.Event switch
@@ -60,6 +65,8 @@ namespace JanD.DiscordWebhook
                             "procdel" => 0x00E74C3C,
                             "procadd" => 0x003498DB,
                             "procstop" => 0x00E74C3C,
+                            "procren" => 0x003498DB,
+                            "procprop" => 0x003498DB,
                             _ => 0x002F3136
                         }
                     }

@@ -218,6 +218,7 @@ namespace JanD
                     proc.Enabled = Boolean.Parse(packet.Data[(separatorIndex + 1)..]);
                     pipeServer.Write(proc.Enabled.ToString());
                     NotSaved = true;
+                    ProcessPropertyUpdated(proc.Name, "Enabled", packet.Data[(separatorIndex + 1)..]);
                     break;
                 }
                 case "set-process-property":
@@ -234,6 +235,7 @@ namespace JanD
                     property.SetValueString(process, req.Data);
                     pipeServer.Write("done");
                     NotSaved = true;
+                    ProcessPropertyUpdated(req.Process, req.Property, req.Data);
                     break;
                 }
                 case "get-process-info":
@@ -425,6 +427,9 @@ namespace JanD
             }
         }
 
+        public static Task ProcessPropertyUpdated(string processName, string propertyName, string newValue)
+            => ProcessEventAsync(DaemonEvents.ProcessPropertyUpdated, processName, propertyName + ":" + newValue);
+
         public static async Task ProcessEventAsync(DaemonEvents daemonEvent, string processName, string data = null)
         {
             foreach (var connection in Connections)
@@ -438,12 +443,9 @@ namespace JanD
                     writer.WriteString("Event", daemonEvent.ToIpcString());
                     writer.WriteString("Process", processName);
                     if (data != null)
-                        writer.WriteString("Data", data);
+                        writer.WriteString("Value", data);
                     writer.WriteEndObject();
                     await writer.FlushAsync();
-                    // Says this is only supported on W*ndows but works on my (Arch btw) Linux machine????
-                    if (OperatingSystem.IsLinux())
-                        connection.Stream.WaitForPipeDrain();
                 }
                 catch
                 {
@@ -501,6 +503,9 @@ namespace JanD
 
             // procren
             ProcessRenamed = 0b0100_0000,
+
+            // procprop
+            ProcessPropertyUpdated = 0b1000_0000,
         }
     }
 
