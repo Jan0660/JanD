@@ -77,9 +77,10 @@ namespace JanD
                 case "disable":
                 {
                     var client = new IpcClient();
-                    foreach (var proc in args[1..])
-                        Console.WriteLine(proc + ": " + client.RequestString("set-enabled",
-                            proc + ":" + (args[0].ToLower() == "disable" ? "false" : "true")));
+                    for (var i = 0; i < args.Length - 1; i++)
+                        args[i + 1] = args[i + 1] + ":" + (args[0].ToLower() == "disable" ? "false" : "true");
+
+                    client.DoRequests(args[1..], "set-enabled");
                     break;
                 }
                 case "l":
@@ -95,15 +96,13 @@ namespace JanD
                 case "stop":
                 {
                     var client = new IpcClient();
-                    foreach (var proc in args[1..])
-                        Console.WriteLine(proc + ": " + client.RequestString("stop-process", proc));
+                    client.DoRequests(args[1..], "stop-process");
                     break;
                 }
                 case "restart":
                 {
                     var client = new IpcClient();
-                    foreach (var proc in args[1..])
-                        Console.WriteLine(proc + ": " + client.RequestString("restart-process", proc));
+                    client.DoRequests(args[1..], "restart-process");
                     break;
                 }
                 case "i":
@@ -248,8 +247,7 @@ namespace JanD
                 case "delete":
                 {
                     var client = new IpcClient();
-                    foreach (var proc in args[1..])
-                        Console.WriteLine(proc + ": " + client.RequestString("delete-process", proc));
+                    client.DoRequests(args[1..], "delete-process");
                     DoProcessListIfEnabled(client);
                     break;
                 }
@@ -432,12 +430,13 @@ Or you can contribute on GitHub!");
                 {
                     // spp process property data...
                     var client = new IpcClient();
-                    Console.WriteLine(client.RequestString("set-process-property", JsonSerializer.Serialize(new SetPropertyIpcPacket()
-                    {
-                        Process = args[1],
-                        Property = args[2],
-                        Data = String.Join(' ', args[3..])
-                    })));
+                    Console.WriteLine(client.RequestString("set-process-property", JsonSerializer.Serialize(
+                        new SetPropertyIpcPacket()
+                        {
+                            Process = args[1],
+                            Property = args[2],
+                            Data = String.Join(' ', args[3..])
+                        })));
                     break;
                 }
                 default:

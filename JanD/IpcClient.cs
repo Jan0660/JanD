@@ -58,6 +58,18 @@ namespace JanD
         public void Write(string str)
             => SendString("write", str);
 
+        public void DoRequests(string[] processes, string type)
+        {
+            foreach (var proc in processes)
+            {
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.Write(proc);
+                Console.ResetColor();
+                Console.Write(": ");
+                Console.WriteLine(RequestString(type, proc));
+            }
+        }
+
         [DoesNotReturn]
         public void ListenEvents(Action<DaemonClientEvent> action)
         {
