@@ -43,7 +43,7 @@ namespace JanD
 
         [JsonIgnore]
         public bool ShouldRestart =>
-            !Stopped && (AutoRestart | Enabled) && CurrentUnstableRestarts < Daemon.Config.MaxRestarts;
+            !Stopped && AutoRestart && Enabled && CurrentUnstableRestarts < Daemon.Config.MaxRestarts;
 
         [JsonIgnore] public bool Stopped { get; set; }
         [JsonIgnore] public int ExitCode { get; set; }
