@@ -75,7 +75,9 @@ namespace JanD
                     }
                 }
 
+#pragma warning disable 4014
                 Daemon.ProcessEventAsync(Daemon.DaemonEvents.ProcessStopped, this.Name);
+#pragma warning restore 4014
             };
 
             void Log(string whichStd, DataReceivedEventArgs eventArgs)
@@ -142,7 +144,9 @@ namespace JanD
                 }
             }
 
+#pragma warning disable 4014
             Daemon.ProcessEventAsync(Daemon.DaemonEvents.ProcessStarted, this.Name);
+#pragma warning restore 4014
         }
 
         /// <summary>
