@@ -193,10 +193,9 @@ namespace JanD
                     var val1 = packet.Data[..packet.Data.IndexOf(':')];
                     var val2 = packet.Data[(packet.Data.IndexOf(':') + 1)..];
                     if (Processes.Any(p => p.Name == val2))
-                    {
-                        pipeServer.Write("ERR:already-exists");
-                        return;
-                    }
+                        throw new DaemonException("already-exists");
+                    if (!ProcessNameValidationRegex.IsMatch(val2))
+                        throw new DaemonException("Process name doesn't pass verification regex.");
 
                     var proc = GetProcess(val1);
                     proc.Name = val2;
