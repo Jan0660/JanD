@@ -5,6 +5,7 @@ using System.IO.Pipes;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -19,6 +20,7 @@ namespace JanD
         public static Config Config;
         public static CancellationTokenSource CancellationTokenSource = new();
         public static List<DaemonConnection> Connections = new();
+        public static Regex ProcessNameValidationRegex = new("^(?!(-|[0-9]|\\/))([A-z]|[0-9]|_|-|\\.|@|#|\\/)+$");
 
         #region util
 
@@ -229,6 +231,7 @@ namespace JanD
                         pipeServer.Write("Invalid property.");
                         return;
                     }
+
                     property.SetValueString(process, req.Data);
                     pipeServer.Write("done");
                     NotSaved = true;
@@ -276,11 +279,11 @@ namespace JanD
                 case "new-process":
                 {
                     var def = JsonSerializer.Deserialize<JanDNewProcess>(packet.Data);
-                    if (Processes.Any(p => p.Name == def.Name))
-                    {
-                        pipeServer.Write("ERR:already-exists");
-                        return;
-                    }
+                    if (Processes.Any(p => p.Name == def!.Name))
+                        throw new DaemonException("already-exists");
+
+                    if (!ProcessNameValidationRegex.IsMatch(def!.Name))
+                        throw new DaemonException("Process name doesn't pass verification regex.");
 
                     JanDProcess proc = new()
                     {
