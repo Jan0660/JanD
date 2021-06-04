@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace JanD
@@ -87,7 +88,7 @@ namespace JanD
                 case "list":
                 {
                     var client = new IpcClient();
-                    DoProcessList(client);
+                    DoProcessList(client, args.Length > 1 && args[1].StartsWith('/') && args[1].EndsWith('/') ? new Regex(args[1][1..^1]) : null);
 
                     break;
                 }
@@ -451,7 +452,12 @@ Or you can contribute on GitHub!");
                 DoProcessList(client);
         }
 
-        private static void DoProcessList(IpcClient client)
+        /// <summary>
+        /// Shows process list.
+        /// </summary>
+        /// <param name="client"></param>
+        /// <param name="matchRegex">Show only processes that match this regex.</param>
+        private static void DoProcessList(IpcClient client, Regex matchRegex = null)
         {
             var json = client.RequestString("get-processes", "");
             var status = client.GetStatus();
@@ -473,6 +479,8 @@ Or you can contribute on GitHub!");
             Console.WriteLine();
             foreach (var process in processes)
             {
+                if (matchRegex != null && !matchRegex.IsMatch(process.Name))
+                    continue;
                 Console.Write((process.Running ? TrueMark : FalseMark) + "|" +
                               (process.Enabled ? TrueMark : FalseMark) + "|"
                               + (process.AutoRestart ? TrueMark : FalseMark) + " ");
