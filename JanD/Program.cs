@@ -120,7 +120,7 @@ namespace JanD
                             var proc = JsonSerializer.Deserialize<JanDRuntimeProcess>(
                                 client.RequestString("get-process-info", process));
 
-                            Console.WriteLine(proc.Name);
+                            Console.WriteLine(proc!.Name);
                             Info("Command", proc.Command);
                             Info("WorkingDirectory", proc.WorkingDirectory);
                             Info("PID", proc.ProcessId.ToString());
@@ -187,10 +187,10 @@ namespace JanD
                 {
                     var events = args[0].ToLower() switch
                     {
-                        "logs" => Daemon.DaemonEvents.ErrLog | Daemon.DaemonEvents.OutLog,
-                        "outlogs" => Daemon.DaemonEvents.OutLog,
-                        "errlogs" => Daemon.DaemonEvents.ErrLog,
-                        _ => Daemon.DaemonEvents.ErrLog | Daemon.DaemonEvents.OutLog
+                        "logs" => DaemonEvents.ErrLog | DaemonEvents.OutLog,
+                        "outlogs" => DaemonEvents.OutLog,
+                        "errlogs" => DaemonEvents.ErrLog,
+                        _ => DaemonEvents.ErrLog | DaemonEvents.OutLog
                     };
                     var client = new IpcClient();
                     if (Environment.GetEnvironmentVariable("JAND_AUTOFLUSH") != null
@@ -222,9 +222,9 @@ namespace JanD
                         Console.ResetColor();
                     }
 
-                    if (events.HasFlag(Daemon.DaemonEvents.OutLog))
+                    if (events.HasFlag(DaemonEvents.OutLog))
                         TailLog("out");
-                    if (events.HasFlag(Daemon.DaemonEvents.ErrLog))
+                    if (events.HasFlag(DaemonEvents.ErrLog))
                         TailLog("err");
                     Console.WriteLine();
                     if (OperatingSystem.IsWindows())
@@ -235,9 +235,9 @@ namespace JanD
                     }
 
                     client.RequestString("subscribe-events", ((int) events).ToString());
-                    if (events.HasFlag(Daemon.DaemonEvents.OutLog))
+                    if (events.HasFlag(DaemonEvents.OutLog))
                         client.RequestString("subscribe-outlog-event", args[1]);
-                    if (events.HasFlag(Daemon.DaemonEvents.ErrLog))
+                    if (events.HasFlag(DaemonEvents.ErrLog))
                         client.RequestString("subscribe-errlog-event", args[1]);
                     client.ListenEvents(ev => Console.Write(ev!.Value));
                     break;
@@ -431,7 +431,7 @@ Or you can contribute on GitHub!");
                     // spp process property data...
                     var client = new IpcClient();
                     Console.WriteLine(client.RequestString("set-process-property", JsonSerializer.Serialize(
-                        new SetPropertyIpcPacket()
+                        new SetPropertyIpcPacket
                         {
                             Process = args[1],
                             Property = args[2],
@@ -464,7 +464,7 @@ Or you can contribute on GitHub!");
             var processes = JsonSerializer.Deserialize<JanDRuntimeProcess[]>(json);
 
             int maxNameLength = 0;
-            foreach (var process in processes)
+            foreach (var process in processes!)
                 if (process.Name.Length > maxNameLength)
                     maxNameLength = process.Name.Length;
             maxNameLength = maxNameLength < 12 ? 14 : maxNameLength;
@@ -606,10 +606,10 @@ Or you can contribute on GitHub!");
 
         public static string GetResourceString(string name)
         {
-            var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+            var assembly = Assembly.GetExecutingAssembly();
 
             using (Stream stream = assembly.GetManifestResourceStream("JanD.Resources." + name))
-            using (StreamReader reader = new StreamReader(stream))
+            using (StreamReader reader = new StreamReader(stream!))
             {
                 return reader.ReadToEnd();
             }

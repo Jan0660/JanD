@@ -22,7 +22,7 @@ namespace JanD
 
         public void SendString(string type, string data)
         {
-            Stream.Write(JsonSerializer.SerializeToUtf8Bytes(new IpcPacket()
+            Stream.Write(JsonSerializer.SerializeToUtf8Bytes(new IpcPacket
             {
                 Type = type,
                 Data = data

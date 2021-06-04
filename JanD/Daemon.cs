@@ -15,12 +15,12 @@ namespace JanD
 {
     public static class Daemon
     {
-        public static bool NotSaved = false;
+        public static bool NotSaved;
         public static List<JanDProcess> Processes;
         public static Config Config;
-        public static CancellationTokenSource CancellationTokenSource = new();
-        public static List<DaemonConnection> Connections = new();
-        public static Regex ProcessNameValidationRegex = new("^(?!(-|[0-9]|\\/))([A-z]|[0-9]|_|-|\\.|@|#|\\/)+$");
+        public static readonly CancellationTokenSource CancellationTokenSource = new();
+        public static readonly List<DaemonConnection> Connections = new();
+        public static readonly Regex ProcessNameValidationRegex = new("^(?!(-|[0-9]|\\/))([A-z]|[0-9]|_|-|\\.|@|#|\\/)+$");
 
         #region util
 
@@ -79,7 +79,7 @@ namespace JanD
             {
                 var pipeServer = new NamedPipeServerStream(Program.PipeName, PipeDirection.InOut, 250,
                     OperatingSystem.IsWindows() ? PipeTransmissionMode.Message : PipeTransmissionMode.Byte);
-                pipeServer.BeginWaitForConnection(state =>
+                pipeServer.BeginWaitForConnection(_ =>
                     {
                         if (Config.LogIpc)
                             DaemonLog("IPC connected.");
@@ -161,7 +161,7 @@ namespace JanD
             if (Config.LogIpc)
                 DaemonLog("Received IPC: " + Encoding.UTF8.GetString(bytes.AsSpan()[..count]));
             var packet = JsonSerializer.Deserialize<IpcPacket>(bytes.AsSpan()[..count]);
-            switch (packet.Type)
+            switch (packet!.Type)
             {
                 case "ping":
                     Console.WriteLine("ping");
@@ -297,7 +297,7 @@ namespace JanD
                     Processes.Add(proc);
                     NotSaved = true;
                     pipeServer.Write("added");
-                    Daemon.ProcessEventAsync(Daemon.DaemonEvents.ProcessAdded, proc.Name);
+                    ProcessEventAsync(DaemonEvents.ProcessAdded, proc.Name);
                     break;
                 }
                 case "start-process":
@@ -319,7 +319,7 @@ namespace JanD
                 case "save-config":
                 {
                     Config.Processes = Processes.ToArray();
-                    var json = JsonSerializer.Serialize(Config, new JsonSerializerOptions()
+                    var json = JsonSerializer.Serialize(Config, new JsonSerializerOptions
                     {
                         WriteIndented = Config.FormatConfig
                     });
@@ -357,7 +357,7 @@ namespace JanD
                     Processes.Remove(proc);
                     NotSaved = true;
                     pipeServer.Write("done");
-                    Daemon.ProcessEventAsync(Daemon.DaemonEvents.ProcessDeleted, proc.Name);
+                    ProcessEventAsync(DaemonEvents.ProcessDeleted, proc.Name);
                     break;
                 }
                 case "subscribe-events":
@@ -479,34 +479,6 @@ namespace JanD
                 ErrLogSubs = new();
             }
         }
-
-        [Flags]
-        public enum DaemonEvents
-        {
-            // outlog
-            OutLog = 0b0000_0001,
-
-            // errlog
-            ErrLog = 0b0000_0010,
-
-            // procstop
-            ProcessStopped = 0b0000_0100,
-
-            // procstart
-            ProcessStarted = 0b0000_1000,
-
-            // procadd
-            ProcessAdded = 0b0001_0000,
-
-            // procdel
-            ProcessDeleted = 0b0010_0000,
-
-            // procren
-            ProcessRenamed = 0b0100_0000,
-
-            // procprop
-            ProcessPropertyUpdated = 0b1000_0000,
-        }
     }
 
     public class DaemonStatus
@@ -515,6 +487,34 @@ namespace JanD
         public bool NotSaved { get; set; }
         public string Directory { get; set; }
         public string Version { get; set; }
+    }
+
+    [Flags]
+    public enum DaemonEvents
+    {
+        // outlog
+        OutLog = 0b0000_0001,
+
+        // errlog
+        ErrLog = 0b0000_0010,
+
+        // procstop
+        ProcessStopped = 0b0000_0100,
+
+        // procstart
+        ProcessStarted = 0b0000_1000,
+
+        // procadd
+        ProcessAdded = 0b0001_0000,
+
+        // procdel
+        ProcessDeleted = 0b0010_0000,
+
+        // procren
+        ProcessRenamed = 0b0100_0000,
+
+        // procprop
+        ProcessPropertyUpdated = 0b1000_0000,
     }
 
     public class DaemonException : Exception

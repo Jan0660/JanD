@@ -1,3 +1,4 @@
+#pragma warning disable 8632
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
@@ -22,17 +23,16 @@ namespace Jan0660.DiscordWebhook
         public async Task SendMessageAsync(string content = null, string username = null, string avatarUrl = null,
             List<DiscordEmbed> embeds = null)
         {
-            HttpRequestMessage req = new(HttpMethod.Post, _url);
-            req.Content = new StringContent(JsonSerializer.Serialize(new DiscordWebhookRequest()
+            HttpRequestMessage req = new(HttpMethod.Post, _url)
             {
-                Content = content,
-                Username = username,
-                AvatarUrl = avatarUrl,
-                EmbedsList = embeds
-            }, new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-            }), Encoding.UTF8, "application/json");
+                Content = new StringContent(
+                    JsonSerializer.Serialize(
+                        new DiscordWebhookRequest()
+                        {
+                            Content = content, Username = username, AvatarUrl = avatarUrl, EmbedsList = embeds
+                        }, new JsonSerializerOptions {PropertyNamingPolicy = JsonNamingPolicy.CamelCase}),
+                    Encoding.UTF8, "application/json")
+            };
             await _httpClient.SendAsync(req);
             req.Dispose();
         }

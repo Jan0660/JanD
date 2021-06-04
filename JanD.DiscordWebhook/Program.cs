@@ -13,9 +13,9 @@ namespace JanD.DiscordWebhook
         {
             var config = JsonSerializer.Deserialize<Config>(await File.ReadAllTextAsync("./config.json"));
             var discord = new DiscordWebhookClient(config!.WebhookId, config.WebhookToken);
-            var eventClient = new IpcClient(System.Environment.GetEnvironmentVariable("JAND_PIPE") ??
+            var eventClient = new IpcClient(Environment.GetEnvironmentVariable("JAND_PIPE") ??
                                             JanD.Program.DefaultPipeName);
-            var client = new IpcClient(System.Environment.GetEnvironmentVariable("JAND_PIPE") ??
+            var client = new IpcClient(Environment.GetEnvironmentVariable("JAND_PIPE") ??
                                        JanD.Program.DefaultPipeName);
             eventClient.RequestString("subscribe-events", "255");
             eventClient.ListenEvents(ev =>
@@ -31,7 +31,9 @@ namespace JanD.DiscordWebhook
                     info = null;
                 }
 
+#pragma warning disable 4014
                 discord.SendMessageAsync(embeds: new List<DiscordEmbed>
+#pragma warning restore 4014
                 {
                     new()
                     {
