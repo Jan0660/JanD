@@ -20,7 +20,9 @@ namespace JanD
         public static Config Config;
         public static readonly CancellationTokenSource CancellationTokenSource = new();
         public static readonly List<DaemonConnection> Connections = new();
-        public static readonly Regex ProcessNameValidationRegex = new("^(?!(-|[0-9]|\\/))([A-z]|[0-9]|_|-|\\.|@|#|\\/)+$");
+
+        public static readonly Regex ProcessNameValidationRegex =
+            new("^(?!(-|[0-9]|\\/))([A-z]|[0-9]|_|-|\\.|@|#|\\/)+$");
 
         #region util
 
@@ -204,6 +206,11 @@ namespace JanD
                     ProcessEventAsync(DaemonEvents.ProcessRenamed, val1, val2);
                     break;
                 }
+                case "send-process-stdin-line":
+                    GetProcess(packet.Data[..packet.Data.IndexOf(':')]).Process.StandardInput
+                        .WriteLine(packet.Data[(packet.Data.IndexOf(':') + 1)..]);
+                    pipeServer.Write("done");
+                    break;
                 case "set-enabled":
                 {
                     var separatorIndex = packet.Data.IndexOf(':');

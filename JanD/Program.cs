@@ -88,7 +88,10 @@ namespace JanD
                 case "list":
                 {
                     var client = new IpcClient();
-                    DoProcessList(client, args.Length > 1 && args[1].StartsWith('/') && args[1].EndsWith('/') ? new Regex(args[1][1..^1]) : null);
+                    DoProcessList(client,
+                        args.Length > 1 && args[1].StartsWith('/') && args[1].EndsWith('/')
+                            ? new Regex(args[1][1..^1])
+                            : null);
 
                     break;
                 }
@@ -355,6 +358,13 @@ Or you can contribute on GitHub!");
                     var client = new IpcClient();
                     Console.WriteLine(client.RequestString("rename-process", args[1] + ':' + args[2]));
                     DoProcessListIfEnabled(client);
+                    break;
+                }
+                case "send":
+                {
+                    var client = new IpcClient();
+                    Console.WriteLine(client.RequestString("send-process-stdin-line",
+                        args[1] + ":" + String.Join(' ', args[2..])));
                     break;
                 }
                 case "config":

@@ -45,7 +45,7 @@ namespace JanD
                 Arguments = Command[(index == -1 ? last : (Command.IndexOf(' ') + 1))..],
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
-                RedirectStandardInput = false,
+                RedirectStandardInput = true,
                 UseShellExecute = false,
                 StandardErrorEncoding = Encoding.UTF8,
                 StandardOutputEncoding = Encoding.UTF8,

@@ -17,6 +17,7 @@ Commands:
     outlogs <name>                           View the last 15 lines of stdout logs for a process and watch for new stdout logs.
     errlogs <name>                           View the last 15 lines of stderr logs for a process and watch for new stderr logs.
     rm, delete <name$[]>                     Delete a process.
+    send <name> <text...>                    Send line of text to process' stdin.
     startup                                  Generate a SystemD or runit service file.
     flush                                    Ensure all logs are written to disk.
     rename <currentName> <newName>           Rename a process.
