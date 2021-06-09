@@ -35,7 +35,8 @@ namespace JanD
                 Directory.SetCurrentDirectory(home);
             }
 
-            Console.WriteLine($"JanD v{ThisAssembly.Info.Version}");
+            if (Environment.GetEnvironmentVariable("JAND_NO_VER") != "1")
+                Console.WriteLine($"JanD v{ThisAssembly.Info.Version}");
             if (args.Length == 0)
             {
                 Console.WriteLine("No argument given. For a list of commands see the `help` command.");
@@ -447,6 +448,19 @@ Or you can contribute on GitHub!");
                             Property = args[2],
                             Data = String.Join(' ', args[3..])
                         })));
+                    break;
+                }
+                case "compgen-proc-list":
+                {
+                    var client = new IpcClient();
+                    var processes = client.RequestJson<JanDRuntimeProcess[]>("get-processes", "");
+                    for (var i = 0; i < processes.Length; i++)
+                    {
+                        Console.Write(processes[i].Name);
+                        if (i != processes.Length - 1)
+                            Console.Write(' ');
+                    }
+
                     break;
                 }
                 default:
