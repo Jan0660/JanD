@@ -111,15 +111,21 @@ namespace JanD
 
                             try
                             {
-                                HandlePacket(pipeServer, bytes, count, connection);
+                                try
+                                {
+                                    HandlePacket(pipeServer, bytes, count, connection);
+                                }
+                                catch (DaemonException exception)
+                                {
+                                    pipeServer.Write("ERR:" + exception.Message);
+                                }
+                                catch (Exception exception)
+                                {
+                                    pipeServer.Write("ERR:" + exception.Message + '\n' + exception.StackTrace);
+                                }
                             }
-                            catch (DaemonException exception)
+                            finally
                             {
-                                pipeServer.Write("ERR:" + exception.Message);
-                            }
-                            catch (Exception exception)
-                            {
-                                pipeServer.Write("ERR:" + exception.Message + '\n' + exception.StackTrace);
                             }
 
                             PipeRead();
@@ -370,14 +376,14 @@ namespace JanD
                 case "subscribe-events":
                 {
                     connection.Events =
-                        (DaemonEvents) ((int) connection.Events | int.Parse(packet.Data));
+                        (DaemonEvents)((int)connection.Events | int.Parse(packet.Data));
                     pipeServer.Write("done");
                     break;
                 }
                 case "unsubscribe-events":
                 {
                     connection.Events =
-                        (DaemonEvents) ((int) connection.Events ^ int.Parse(packet.Data));
+                        (DaemonEvents)((int)connection.Events ^ int.Parse(packet.Data));
                     pipeServer.Write("done");
                     break;
                 }
