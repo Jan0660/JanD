@@ -163,7 +163,7 @@ namespace JanD
         public void Stop()
         {
             Stopped = true;
-            Process?.Kill();
+            Process?.Kill(true);
             try
             {
                 Process?.WaitForExit();
