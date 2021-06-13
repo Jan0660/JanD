@@ -124,8 +124,9 @@ namespace JanD
                                     pipeServer.Write("ERR:" + exception.Message + '\n' + exception.StackTrace);
                                 }
                             }
-                            finally
+                            catch
                             {
+                                // pipe broke and exception writes above threw an exception...
                             }
 
                             PipeRead();
