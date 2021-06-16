@@ -431,11 +431,13 @@ Or you can contribute on GitHub!");
                     break;
                 }
                 case "raw-request":
+                case "request":
                 {
                     var client = new IpcClient();
                     var type = args[1];
                     var data = string.Join(' ', args[2..]);
-                    Console.WriteLine($"Sending request: Type: `{type}`; Data: `{data}`");
+                    if(args[0].ToLower() == "request")
+                        Console.WriteLine($"Sending request: Type: `{type}`; Data: `{data}`");
                     Console.WriteLine(client.RequestString(type, data));
                     break;
                 }
