@@ -134,6 +134,7 @@ namespace JanD
                             InfoBool("Enabled", proc.Enabled);
                             InfoBool("AutoRestart", proc.AutoRestart);
                             InfoBool("Running", proc.Running);
+                            InfoBool("Watch", proc.Watch);
                         }
                     }
 
@@ -685,6 +686,7 @@ Or you can contribute on GitHub!");
             public bool Enabled { get; set; }
             public bool AutoRestart { get; set; }
             public bool Running { get; set; }
+            public bool Watch { get; set; }
         }
     }
 }

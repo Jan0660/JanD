@@ -30,6 +30,7 @@ namespace JanD
             j.WriteBoolean("Enabled", proc.Enabled);
             j.WriteBoolean("AutoRestart", proc.AutoRestart);
             j.WriteBoolean("Running", proc.Process != null);
+            j.WriteBoolean("Watch", proc.Watch);
         }
 
         /// <summary>

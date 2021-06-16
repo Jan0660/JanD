@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 
 namespace JanD
 {
@@ -16,6 +17,7 @@ namespace JanD
         [JsonIgnore] public Process Process { get; set; }
         public bool AutoRestart { get; set; }
         public bool Enabled { get; set; }
+        public bool Watch { get; set; }
 
         [JsonIgnore]
         public bool ShouldRestart =>
@@ -27,6 +29,7 @@ namespace JanD
         [JsonIgnore] public int RestartCount { get; set; }
         [JsonIgnore] public StreamWriter OutWriter { get; set; }
         [JsonIgnore] public StreamWriter ErrWriter { get; set; }
+        [JsonIgnore] public FileSystemWatcher FileSystemWatcher { get; set; }
 
         public void Start()
         {
@@ -36,6 +39,31 @@ namespace JanD
                 Ansi.ForegroundColor($"Starting: Name: {Name}; Command: {Command}", 0, 247, 247));
             OutWriter ??= new StreamWriter(Path.Combine("./logs/") + Name + "-out.log", true);
             ErrWriter ??= new StreamWriter(Path.Combine("./logs/") + Name + "-err.log", true);
+            if (Watch && FileSystemWatcher == null)
+            {
+                FileSystemWatcher = new FileSystemWatcher(WorkingDirectory)
+                {
+                    EnableRaisingEvents = true,
+                    IncludeSubdirectories = true,
+                    NotifyFilter = NotifyFilters.CreationTime
+                                   | NotifyFilters.LastWrite
+                };
+                FileSystemWatcher.Changed += (_, args) =>
+                {
+                    Daemon.DaemonLog($"File changed for {Name}: {args.Name}, restarting in 500ms");
+                    // prevent race condition/multiple files changed at once causing multiple restarts
+                    bool wasHandled = false;
+                    Task.Delay(500).ContinueWith(_ =>
+                    {
+                        if (wasHandled)
+                            return;
+                        wasHandled = true;
+                        Stop();
+                        Start();
+                    });
+                };
+            }
+
             var process = new Process();
             var index = Command.IndexOf(' ');
             var last = Command.Length;
@@ -91,7 +119,7 @@ namespace JanD
                     OutWriter.Write(str);
                 if (whichStd == "err")
                     ErrWriter.Write(str);
-                if(Daemon.Config.LogProcessOutput)
+                if (Daemon.Config.LogProcessOutput)
                     Console.Write(str);
                 foreach (var con in Daemon.Connections.Where(c =>
                     c.Events.HasFlag((whichStd == "out" ? DaemonEvents.OutLog : DaemonEvents.ErrLog))))
