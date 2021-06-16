@@ -248,6 +248,7 @@ namespace JanD
                 }
                 case "remove":
                 case "rm":
+                case "del":
                 case "delete":
                 {
                     var client = new IpcClient();
