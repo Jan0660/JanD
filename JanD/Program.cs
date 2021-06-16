@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -239,7 +240,7 @@ namespace JanD
                         return;
                     }
 
-                    client.RequestString("subscribe-events", ((int) events).ToString());
+                    client.RequestString("subscribe-events", ((int)events).ToString());
                     if (events.HasFlag(DaemonEvents.OutLog))
                         client.RequestString("subscribe-outlog-event", args[1]);
                     if (events.HasFlag(DaemonEvents.ErrLog))
@@ -380,7 +381,7 @@ Or you can contribute on GitHub!");
                         foreach (var property in type.GetProperties(BindingFlags.Instance | BindingFlags.Public))
                         {
                             if (property.PropertyType == typeof(bool))
-                                InfoBool(property.Name, (bool) property.GetValue(config)!);
+                                InfoBool(property.Name, (bool)property.GetValue(config)!);
                             else if (property.PropertyType == typeof(int))
                                 Info(property.Name, property.GetValue(config)!.ToString());
 
@@ -430,13 +431,53 @@ Or you can contribute on GitHub!");
 
                     break;
                 }
+                case "group":
+                case "grp":
+                {
+                    switch (args[1].ToLower())
+                    {
+                        case "up":
+                        case "start":
+                        {
+                            var groupFile =
+                                JsonSerializer.Deserialize<GroupFile>(File.ReadAllText("./jand-group.json"),
+                                    new JsonSerializerOptions()
+                                    {
+                                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                                    });
+                            var client = new IpcClient();
+                            var list = new List<String>();
+                            foreach (var proc in groupFile!.Processes)
+                            {
+                                proc.WorkingDirectory = Path.GetFullPath(proc.WorkingDirectory);
+                                proc.Command = proc.Command.StartsWith('.')
+                                    ? Path.GetFullPath(proc.Command.Split(' ')[0]) +
+                                      String.Join(' ', proc.Command.Split(' ')[1..])
+                                    : proc.Command;
+                                proc.Name = String.Format(proc.Name, args.Length == 3 ? args[2] : null);
+                                Console.Write("new " + proc.Name + ": ");
+                                Console.WriteLine(client.RequestString("new-process",
+                                    JsonSerializer.Serialize(proc)));
+                                list.Add(proc.Name);
+                            }
+
+                            Console.WriteLine("Starting processes...");
+                            client.DoRequests(list.ToArray(), "start-process");
+
+
+                            break;
+                        }
+                    }
+
+                    break;
+                }
                 case "raw-request":
                 case "request":
                 {
                     var client = new IpcClient();
                     var type = args[1];
                     var data = string.Join(' ', args[2..]);
-                    if(args[0].ToLower() == "request")
+                    if (args[0].ToLower() == "request")
                         Console.WriteLine($"Sending request: Type: `{type}`; Data: `{data}`");
                     Console.WriteLine(client.RequestString(type, data));
                     break;
@@ -540,9 +581,9 @@ Or you can contribute on GitHub!");
                     var mem = proc.WorkingSet64;
                     string memString = mem switch
                     {
-                        > (int) 1e9 => (mem / (int) 1e9) + "GB",
-                        > (int) 1e6 => (mem / (int) 1e6) + "MB",
-                        > (int) 1e3 => (mem / (int) 1e3) + "KB",
+                        > (int)1e9 => (mem / (int)1e9) + "GB",
+                        > (int)1e6 => (mem / (int)1e6) + "MB",
+                        > (int)1e3 => (mem / (int)1e3) + "KB",
                         _ => mem.ToString()
                     };
                     Console.Write("{0,-7}", memString);
