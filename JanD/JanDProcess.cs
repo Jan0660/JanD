@@ -37,8 +37,14 @@ namespace JanD
                 return;
             Console.WriteLine(
                 Ansi.ForegroundColor($"Starting: Name: {Name}; Command: {Command}", 0, 247, 247));
-            OutWriter ??= new StreamWriter(Path.Combine("./logs/") + Name + "-out.log", true);
-            ErrWriter ??= new StreamWriter(Path.Combine("./logs/") + Name + "-err.log", true);
+            OutWriter ??= new StreamWriter(Path.Combine("./logs/") + Name + "-out.log", true)
+            {
+                AutoFlush = true
+            };
+            ErrWriter ??= new StreamWriter(Path.Combine("./logs/") + Name + "-err.log", true)
+            {
+                AutoFlush = true
+            };
             if (Watch && FileSystemWatcher == null)
             {
                 FileSystemWatcher = new FileSystemWatcher(WorkingDirectory)
@@ -112,8 +118,8 @@ namespace JanD
             {
                 if (eventArgs.Data == null)
                     return;
-                var str = Ansi.ForegroundColor($"{Name} {whichStd}| ", (byte) (whichStd == "err" ? 255 : 0),
-                              (byte) (whichStd == "out" ? 255 : 0), 0) + eventArgs.Data +
+                var str = Ansi.ForegroundColor($"{Name} {whichStd}| ", (byte)(whichStd == "err" ? 255 : 0),
+                              (byte)(whichStd == "out" ? 255 : 0), 0) + eventArgs.Data +
                           '\n';
                 if (whichStd == "out")
                     OutWriter.Write(str);
