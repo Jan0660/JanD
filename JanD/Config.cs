@@ -23,6 +23,9 @@ namespace JanD
         [Description("Logs process output to daemon's stdout.")]
         public bool LogProcessOutput { get; set; } = true;
 
+        [Description("Write daemon's logging output to a file.")]
+        public bool DaemonLogSave { get; set; } = true;
+
         public string SavedVersion { get; set; } = ThisAssembly.Info.Version;
     }
 

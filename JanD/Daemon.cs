@@ -18,6 +18,7 @@ namespace JanD
         public static bool NotSaved;
         public static List<JanDProcess> Processes;
         public static Config Config;
+        public static StreamWriter DaemonLogWriter;
         public static readonly CancellationTokenSource CancellationTokenSource = new();
         public static readonly List<DaemonConnection> Connections = new();
 
@@ -38,15 +39,23 @@ namespace JanD
             return proc;
         }
 
+        /// <summary>
+        /// write in cyan and write to file if enabled
+        /// </summary>
+        /// <param name="str"></param>
         public static void DaemonLog(string str)
-            => Console.WriteLine(Ansi.ForegroundColor(str, 0, 247, 247));
+        {
+            str = Ansi.ForegroundColor(str, 0, 247, 247);
+            DaemonLogWriter?.WriteLine(str);
+            Console.WriteLine(str);
+        }
 
         #endregion
 
         public static async Task Start()
         {
             DaemonLog("Starting daemon in " + Directory.GetCurrentDirectory());
-            DaemonLog($"With PIPE_NAME: {Program.PipeName}");
+            DaemonLog($"With JAND_PIPE: {Program.PipeName}");
             try
             {
                 var json = File.ReadAllText("./config.json");
@@ -59,6 +68,13 @@ namespace JanD
                     Processes = new JanDProcess[0]
                 };
             }
+
+            if (Config!.DaemonLogSave)
+                DaemonLogWriter = new StreamWriter(new FileStream("./daemon.log", FileMode.OpenOrCreate,
+                    FileAccess.Write, FileShare.Read))
+                {
+                    AutoFlush = true
+                };
 
             DaemonLog($"Starting with {Config.Processes.Length} processes.");
             if (!Directory.Exists("./logs"))
