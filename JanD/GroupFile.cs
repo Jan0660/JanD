@@ -2,6 +2,17 @@ namespace JanD
 {
     public class GroupFile
     {
-        public Daemon.JanDNewProcess[] Processes { get; set; }
+        public GroupFileProcess[] Processes { get; set; }
+    }
+
+    public class GroupFileProcess : Daemon.JanDNewProcess
+    {
+        public bool Watch { get; set; }
+        public bool AutoRestart { get; set; }
+        public bool Enabled { get; set; }
+        public GroupFileProcess(string name, string command, string workingDirectory) : base(name, command,
+            workingDirectory)
+        {
+        }
     }
 }

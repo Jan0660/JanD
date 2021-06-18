@@ -71,7 +71,7 @@ namespace JanD
 
         public static PropertyInfo GetPropertyCaseInsensitive(this Type type, string str)
             => type.GetProperties(BindingFlags.Instance | BindingFlags.Public)
-                .FirstOrDefault(p => p.Name.ToLower() == str);
+                .FirstOrDefault(p => p.Name.ToLower() == str.ToLower());
 
         public static void SetValueString(this PropertyInfo property, object obj, string value)
         {

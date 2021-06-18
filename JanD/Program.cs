@@ -458,6 +458,25 @@ Or you can contribute on GitHub!");
                                 Console.Write("new " + proc.Name + ": ");
                                 Console.WriteLine(client.RequestString("new-process",
                                     JsonSerializer.Serialize(proc)));
+                                var defaultValues = new JanDProcess();
+                                foreach (var prop in new[] { "watch", "autoRestart", "enabled" })
+                                {
+                                    // don't set default values
+                                    var val = typeof(GroupFileProcess).GetPropertyCaseInsensitive(prop).GetValue(proc)!.ToString();
+                                    var defVal = typeof(JanDProcess).GetPropertyCaseInsensitive(prop)
+                                        .GetValue(defaultValues)!.ToString();
+                                    if (val != defVal)
+                                    {
+                                        client.RequestString("set-process-property", JsonSerializer.Serialize(
+                                            new SetPropertyIpcPacket
+                                            {
+                                                Process = proc.Name,
+                                                Property = prop,
+                                                Data = val
+                                            }));
+                                    }
+                                }
+
                                 list.Add(proc.Name);
                             }
 

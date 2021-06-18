@@ -15,8 +15,8 @@ namespace JanD
         public string Command { get; set; }
         public string WorkingDirectory { get; set; }
         [JsonIgnore] public Process Process { get; set; }
-        public bool AutoRestart { get; set; }
-        public bool Enabled { get; set; }
+        public bool AutoRestart { get; set; } = true;
+        public bool Enabled { get; set; } = true;
         public bool Watch { get; set; }
 
         [JsonIgnore]

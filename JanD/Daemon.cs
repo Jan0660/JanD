@@ -320,9 +320,7 @@ namespace JanD
                     {
                         Name = def.Name,
                         Command = def.Command,
-                        WorkingDirectory = def.WorkingDirectory,
-                        AutoRestart = true,
-                        Enabled = true
+                        WorkingDirectory = def.WorkingDirectory
                     };
                     Processes.Add(proc);
                     NotSaved = true;
