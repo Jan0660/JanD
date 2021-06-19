@@ -199,6 +199,42 @@ namespace JanD
                         _ => DaemonEvents.ErrLog | DaemonEvents.OutLog
                     };
                     var client = new IpcClient();
+                    if (args.Length == 1)
+                    {
+                        // full logs
+                        client.RequestString("subscribe-events", "255");
+                        var processes =
+                            JsonSerializer.Deserialize<JanDRuntimeProcess[]>(client.RequestString("get-processes", ""));
+                        foreach (var proc in processes)
+                        {
+                            client.RequestString("subscribe-outlog-event", proc.Name);
+                            client.RequestString("subscribe-errlog-event", proc.Name);
+                        }
+                        client.ListenEvents(ev =>
+                        {
+                            if(ev.Event == "outlog" || ev.Event == "errlog")
+                                Console.WriteLine(ev.Value);
+                            else
+                            {
+                                Console.ForegroundColor = ConsoleColor.Cyan;
+                                Console.Write(":: " + ev.Event switch
+                                {
+                                    "procstop" => $"The process `{ev.Process}` has stopped.",
+                                    "procstart" => $"The process `{ev.Process}` has started.",
+                                    "procadd" => $"The process `{ev.Process}` was created.",
+                                    "procdel" => $"The process `{ev.Process}` was removed.",
+                                    "procren" => $"The process `{ev.Process}` was renamed to `{ev.Value}`.",
+                                    _ => $"Process: {ev.Process}; Event: {ev.Event}; Value: {ev.Value}"
+                                });
+                                Console.ResetColor();
+                            }
+                            if(ev.Event == "procren")
+                                client.RequestString("subscribe-outlog-event", ev.Value);
+                            if(ev.Event == "procadd")
+                                client.RequestString("subscribe-outlog-event", ev.Value);
+                        });
+                    }
+
                     if (Environment.GetEnvironmentVariable("JAND_AUTOFLUSH") != null
                         | Environment.GetEnvironmentVariable("JAND_AUTOFLUSH") == "1")
                     {
@@ -462,7 +498,8 @@ Or you can contribute on GitHub!");
                                 foreach (var prop in new[] { "watch", "autoRestart", "enabled" })
                                 {
                                     // don't set default values
-                                    var val = typeof(GroupFileProcess).GetPropertyCaseInsensitive(prop).GetValue(proc)!.ToString();
+                                    var val = typeof(GroupFileProcess).GetPropertyCaseInsensitive(prop).GetValue(proc)!
+                                        .ToString();
                                     var defVal = typeof(JanDProcess).GetPropertyCaseInsensitive(prop)
                                         .GetValue(defaultValues)!.ToString();
                                     if (val != defVal)
