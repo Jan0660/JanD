@@ -213,11 +213,11 @@ namespace JanD
                         client.ListenEvents(ev =>
                         {
                             if(ev.Event == "outlog" || ev.Event == "errlog")
-                                Console.WriteLine(ev.Value);
+                                Console.Write(ev.Value);
                             else
                             {
                                 Console.ForegroundColor = ConsoleColor.Cyan;
-                                Console.Write(":: " + ev.Event switch
+                                Console.WriteLine(":: " + ev.Event switch
                                 {
                                     "procstop" => $"The process `{ev.Process}` has stopped.",
                                     "procstart" => $"The process `{ev.Process}` has started.",
