@@ -1,4 +1,5 @@
 #pragma warning disable 8632
+using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
@@ -18,6 +19,7 @@ namespace Jan0660.DiscordWebhook
         public DiscordWebhookClient(ulong id, string token)
         {
             _url = DiscordUrl + "/webhooks/" + id + "/" + token;
+            Console.WriteLine(_url);
         }
 
         public async Task SendMessageAsync(string content = null, string username = null, string avatarUrl = null,
@@ -33,8 +35,10 @@ namespace Jan0660.DiscordWebhook
                         }, new JsonSerializerOptions {PropertyNamingPolicy = JsonNamingPolicy.CamelCase}),
                     Encoding.UTF8, "application/json")
             };
-            await _httpClient.SendAsync(req);
+            var res = await _httpClient.SendAsync(req);
+            Console.WriteLine(res.StatusCode + ": " + res.Content);
             req.Dispose();
+            res.Dispose();
         }
     }
 

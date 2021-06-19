@@ -5,6 +5,7 @@
         <TargetFramework>net5.0</TargetFramework>
         <AssemblyName>JanD.DiscordWebhook</AssemblyName>
         <StartupObject>JanD.DiscordWebhook.Program</StartupObject>
+        <ValidateExecutableReferencesMatchSelfContained>false</ValidateExecutableReferencesMatchSelfContained>
         <InvariantGlobalization>true</InvariantGlobalization>
 
         <IlcOptimizationPreference>Speed</IlcOptimizationPreference>

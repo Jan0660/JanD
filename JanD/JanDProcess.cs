@@ -127,12 +127,12 @@ namespace JanD
                     ErrWriter.Write(str);
                 if (Daemon.Config.LogProcessOutput)
                     Console.Write(str);
-                foreach (var con in Daemon.Connections.Where(c =>
-                    c.Events.HasFlag((whichStd == "out" ? DaemonEvents.OutLog : DaemonEvents.ErrLog))))
+                try
                 {
-                    if ((whichStd == "out" ? con.OutLogSubs.Contains(Name) : con.ErrLogSubs.Contains(Name)))
+                    foreach (var con in Daemon.Connections.Where(c =>
+                        c.Events.HasFlag((whichStd == "out" ? DaemonEvents.OutLog : DaemonEvents.ErrLog))))
                     {
-                        try
+                        if ((whichStd == "out" ? con.OutLogSubs.Contains(Name) : con.ErrLogSubs.Contains(Name)))
                         {
                             var json = new Utf8JsonWriter(con.Stream);
                             json.WriteStartObject();
@@ -143,11 +143,11 @@ namespace JanD
                             json.Flush();
                             json.Dispose();
                         }
-                        catch
-                        {
-                            // will be hit if connection interrupted, rest of the code should take care of disposing...
-                        }
                     }
+                }
+                catch
+                {
+                    // will be hit if connection interrupted, rest of the code should take care of disposing...
                 }
             }
 

@@ -12,12 +12,16 @@ namespace JanD.DiscordWebhook
         public static async Task Main()
         {
             var config = JsonSerializer.Deserialize<Config>(await File.ReadAllTextAsync("./config.json"));
+            Console.WriteLine("g");
             var discord = new DiscordWebhookClient(config!.WebhookId, config.WebhookToken);
+            Console.WriteLine("r");
             var eventClient = new IpcClient(Environment.GetEnvironmentVariable("JAND_PIPE") ??
                                             JanD.Program.DefaultPipeName);
             var client = new IpcClient(Environment.GetEnvironmentVariable("JAND_PIPE") ??
                                        JanD.Program.DefaultPipeName);
-            eventClient.RequestString("subscribe-events", "255");
+            Console.WriteLine("b");
+            Console.WriteLine(eventClient.RequestString("subscribe-events", "255"));
+            Console.WriteLine("h");
             eventClient.ListenEvents(ev =>
             {
                 Console.WriteLine(ev.Event);
