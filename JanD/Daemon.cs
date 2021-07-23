@@ -21,6 +21,10 @@ namespace JanD
         public static StreamWriter DaemonLogWriter;
         public static readonly CancellationTokenSource CancellationTokenSource = new();
         public static readonly List<DaemonConnection> Connections = new();
+        public static JsonSerializerOptions PacketDeserializationOptions { get; } = new()
+        {
+            PropertyNameCaseInsensitive = true
+        };
 
         public static readonly Regex ProcessNameValidationRegex =
             new("^(?!(-|[0-9]|\\/))([A-z]|[0-9]|_|-|\\.|@|#|\\/)+$");
@@ -185,7 +189,7 @@ namespace JanD
         {
             if (Config.LogIpc)
                 DaemonLog("Received IPC: " + Encoding.UTF8.GetString(bytes.AsSpan()[..count]));
-            var packet = JsonSerializer.Deserialize<IpcPacket>(bytes.AsSpan()[..count]);
+            var packet = JsonSerializer.Deserialize<IpcPacket>(bytes.AsSpan()[..count], PacketDeserializationOptions);
             switch (packet!.Type)
             {
                 case "ping":
