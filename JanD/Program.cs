@@ -65,7 +65,7 @@ namespace JanD
                         ProcessRelativePath();
                         var str = client.RequestString("new-process",
                             JsonSerializer.Serialize(new Daemon.JanDNewProcess(args[1],
-                                String.Join(' ', args[2..]), Directory.GetCurrentDirectory())));
+                                args[2], args[3..], Directory.GetCurrentDirectory())));
                         Console.WriteLine(str);
                         str = client.RequestString("start-process", args[1]);
                         Console.WriteLine(str);
@@ -126,7 +126,8 @@ namespace JanD
                                 client.RequestString("get-process-info", process));
 
                             Console.WriteLine(proc!.Name);
-                            Info("Command", proc.Command);
+                            Info("Filename", proc.Filename);
+                            Info("Arguments", string.Join(' ', proc.Arguments));
                             Info("WorkingDirectory", proc.WorkingDirectory);
                             Info("PID", proc.ProcessId.ToString());
                             Info("ExitCode", proc.ExitCode.ToString());
@@ -148,7 +149,7 @@ namespace JanD
                     ProcessRelativePath();
                     var str = client.RequestString("new-process",
                         JsonSerializer.Serialize(new Daemon.JanDNewProcess(args[1],
-                            String.Join(' ', args[2..]), Directory.GetCurrentDirectory())));
+                            args[2], args[3..], Directory.GetCurrentDirectory())));
                     Console.WriteLine(str);
                     DoProcessListIfEnabled(client);
                     break;
@@ -210,9 +211,10 @@ namespace JanD
                             client.RequestString("subscribe-outlog-event", proc.Name);
                             client.RequestString("subscribe-errlog-event", proc.Name);
                         }
+
                         client.ListenEvents(ev =>
                         {
-                            if(ev.Event == "outlog" || ev.Event == "errlog")
+                            if (ev.Event == "outlog" || ev.Event == "errlog")
                                 Console.Write(ev.Value);
                             else
                             {
@@ -228,9 +230,10 @@ namespace JanD
                                 });
                                 Console.ResetColor();
                             }
-                            if(ev.Event == "procren")
+
+                            if (ev.Event == "procren")
                                 client.RequestString("subscribe-outlog-event", ev.Value);
-                            if(ev.Event == "procadd")
+                            if (ev.Event == "procadd")
                                 client.RequestString("subscribe-outlog-event", ev.Value);
                         });
                     }
@@ -486,10 +489,9 @@ Or you can contribute on GitHub!");
                             foreach (var proc in groupFile!.Processes)
                             {
                                 proc.WorkingDirectory = Path.GetFullPath(proc.WorkingDirectory);
-                                proc.Command = proc.Command.StartsWith('.')
-                                    ? Path.GetFullPath(proc.Command.Split(' ')[0]) +
-                                      String.Join(' ', proc.Command.Split(' ')[1..])
-                                    : proc.Command;
+                                proc.Filename = proc.Filename.StartsWith('.')
+                                    ? Path.GetFullPath(proc.Filename)
+                                    : proc.Filename;
                                 proc.Name = String.Format(proc.Name, args.Length == 3 ? args[2] : null);
                                 Console.Write("new " + proc.Name + ": ");
                                 Console.WriteLine(client.RequestString("new-process",
@@ -776,7 +778,8 @@ Or you can contribute on GitHub!");
         public class JanDRuntimeProcess
         {
             public string Name { get; set; }
-            public string Command { get; set; }
+            public string Filename { get; set; }
+            public string[] Arguments { get; set; }
             public string WorkingDirectory { get; set; }
             public int ProcessId { get; set; }
             public bool Stopped { get; set; }

@@ -12,7 +12,13 @@ namespace JanD
     public class JanDProcess
     {
         public string Name { get; set; }
+        /// <summary>
+        /// DEPRECATED. Use Filename and Arguments instead.
+        /// </summary>
+        [Obsolete]
         public string Command { get; set; }
+        public string Filename { get; set; }
+        public string[] Arguments { get; set; }
         public string WorkingDirectory { get; set; }
         [JsonIgnore] public Process Process { get; set; }
         public bool AutoRestart { get; set; } = true;
@@ -36,7 +42,7 @@ namespace JanD
             if (Process != null)
                 return;
             Console.WriteLine(
-                Ansi.ForegroundColor($"Starting: Name: {Name}; Command: {Command}", 0, 247, 247));
+                Ansi.ForegroundColor($"Starting: Name: {Name}; Filename: {Filename}", 0, 247, 247));
             OutWriter ??= new StreamWriter(Path.Combine("./logs/") + Name + "-out.log", true)
             {
                 AutoFlush = true
@@ -71,12 +77,10 @@ namespace JanD
             }
 
             var process = new Process();
-            var index = Command.IndexOf(' ');
-            var last = Command.Length;
             var startInfo = new ProcessStartInfo
             {
-                FileName = Command[..(index == -1 ? last : index)],
-                Arguments = Command[(index == -1 ? last : (Command.IndexOf(' ') + 1))..],
+                FileName = Filename,
+                Arguments = string.Join(' ', Arguments),
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 RedirectStandardInput = true,

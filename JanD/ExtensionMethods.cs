@@ -13,7 +13,14 @@ namespace JanD
         public static void WriteProcessInfo(this Utf8JsonWriter j, JanDProcess proc)
         {
             j.WriteString("Name", proc.Name);
-            j.WriteString("Command", proc.Command);
+            j.WriteString("Filename", proc.Filename);
+            j.WritePropertyName("Arguments");
+            j.WriteStartArray();
+            foreach (var argument in proc.Arguments)
+            {
+                j.WriteStringValue(argument.AsSpan());
+            }
+            j.WriteEndArray();
             j.WriteString("WorkingDirectory", proc.WorkingDirectory);
             try
             {

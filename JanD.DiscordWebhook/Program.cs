@@ -56,10 +56,11 @@ namespace JanD.DiscordWebhook
                             "procstart" => $"`{ev.Process}` has started.",
                             "procdel" => $"`{ev.Process}` has been deleted.",
                             "procadd" => @$"`{ev.Process}` has been added.
-        **Command:** `{info.Command}`
-        **Directory:** `{info.WorkingDirectory}`",
+**Filename:** `{info.Filename}`
+**Arguments:** `{string.Join(' ', info.Arguments)}`
+**Directory:** `{info.WorkingDirectory}`",
                             "procstop" => @$"`{ev.Process}` has stopped.
-        **Exit Code:** `{info.ExitCode}`",
+**Exit Code:** `{info.ExitCode}`",
                             "procren" => $@"`{ev.Process}` => `{ev.Value}`",
                             "procprop" => $@"`{ev.Process}`
 Property `{ev.Value[..ev.Value.IndexOf(':')]}` changed to `{ev.Value[(ev.Value.IndexOf(':') + 1)..]}`",

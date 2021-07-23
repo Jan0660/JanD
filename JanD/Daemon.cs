@@ -21,6 +21,7 @@ namespace JanD
         public static StreamWriter DaemonLogWriter;
         public static readonly CancellationTokenSource CancellationTokenSource = new();
         public static readonly List<DaemonConnection> Connections = new();
+
         public static JsonSerializerOptions PacketDeserializationOptions { get; } = new()
         {
             PropertyNameCaseInsensitive = true
@@ -64,12 +65,33 @@ namespace JanD
             {
                 var json = File.ReadAllText("./config.json");
                 Config = JsonSerializer.Deserialize<Config>(json);
+                // redundant check for past versions since this is the first migration ever
+                if (Config!.SavedVersion == "0.6.0" || Config.SavedVersion == "0.5.2" ||
+                    Config.SavedVersion == "0.5.1" || Config.SavedVersion == "0.5.0")
+                {
+                    Console.WriteLine("Running migration from version 0.6.0 and lower");
+                    foreach (var process in Config.Processes)
+                    {
+#pragma warning disable 612
+                        var split = process.Command.Split(' ');
+                        process.Filename = split[0];
+                        process.Arguments = split.Length == 1 ? Array.Empty<string>() : split[1..];
+                        process.Command = null;
+#pragma warning restore 612
+                    }
+
+                    NotSaved = true;
+                }
+
+                if (NotSaved)
+                    Console.WriteLine(
+                        "Seems like migrations from past versions were done, please backup and save the configuration manually.");
             }
             catch
             {
                 Config = new()
                 {
-                    Processes = new JanDProcess[0]
+                    Processes = Array.Empty<JanDProcess>()
                 };
             }
 
@@ -221,7 +243,7 @@ namespace JanD
                 {
                     var val1 = packet.Data[..packet.Data.IndexOf(':')];
                     var val2 = packet.Data[(packet.Data.IndexOf(':') + 1)..];
-                    if (Processes.Any(p => p.Name == val2))
+                    if (Processes.Any(p => p.Name == packet.Data.AsSpan()[(packet.Data.IndexOf(':') + 1)..]))
                         throw new DaemonException("already-exists");
                     if (!ProcessNameValidationRegex.IsMatch(val2))
                         throw new DaemonException("Process name doesn't pass verification regex.");
@@ -323,7 +345,8 @@ namespace JanD
                     JanDProcess proc = new()
                     {
                         Name = def.Name,
-                        Command = def.Command,
+                        Filename = def.Filename,
+                        Arguments = def.Arguments,
                         WorkingDirectory = def.WorkingDirectory
                     };
                     Processes.Add(proc);
@@ -489,11 +512,12 @@ namespace JanD
         public class JanDNewProcess
         {
             public string Name { get; set; }
-            public string Command { get; set; }
+            public string Filename { get; set; }
+            public string[] Arguments { get; set; }
             public string WorkingDirectory { get; set; }
 
-            public JanDNewProcess(string name, string command, string workingDirectory) =>
-                (Name, Command, WorkingDirectory) = (name, command, workingDirectory);
+            public JanDNewProcess(string name, string filename, string[] arguments, string workingDirectory) =>
+                (Name, Filename, Arguments, WorkingDirectory) = (name, filename, arguments, workingDirectory);
         }
 
         public class DaemonConnection
