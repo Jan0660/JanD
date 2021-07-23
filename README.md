@@ -1,5 +1,6 @@
 # JanD
 [![chat on discord](https://img.shields.io/discord/749601186155462748?logo=discord)](https://discord.gg/zBbV56e)
+![TeamCity build status](https://ci.nekos.cloud/app/rest/builds/aggregated/strob:(branch:(buildType:(id:JanD_Build),policy:active_history_and_active_vcs_branches),locator:(buildType:(id:JanD_Build)))/statusIcon)
 
 A process manager made in C# with NativeAOT in mind.
 # Usage
