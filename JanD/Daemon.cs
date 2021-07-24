@@ -374,6 +374,7 @@ namespace JanD
                 case "save-config":
                 {
                     Config.Processes = Processes.ToArray();
+                    Config.SavedVersion = ThisAssembly.Info.Version;
                     var json = JsonSerializer.Serialize(Config, new JsonSerializerOptions
                     {
                         WriteIndented = Config.FormatConfig

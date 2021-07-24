@@ -60,7 +60,7 @@ namespace JanD
         public void Write(string str)
             => SendString("write", str);
 
-        public void DoRequests(string[] processes, string type)
+        public void DoRequests(Span<string> processes, string type)
         {
             foreach (var proc in processes)
             {
@@ -72,30 +72,25 @@ namespace JanD
             }
         }
 
-        public string[] GetProcessNames(string[] args)
+        public string[] GetProcessNames(ReadOnlySpan<string> args)
         {
-            string[] processNames = null;
-
-            string[] GetProcesses()
-            {
-                if (processNames != null)
-                    return processNames;
-                var processes = RequestJson<JanDProcess[]>("get-process-list", "");
-                var ls = new List<string>(processes.Length);
-                foreach (var proc in processes)
-                    ls.Add(proc.Name);
-                processNames = ls.ToArray();
-                return processNames;
-            }
+            Span<string> processNames = null;
 
             var result = new List<string>();
             foreach (var arg in args)
             {
                 if (arg.StartsWith('/') && arg.EndsWith('/'))
                 {
-                    var rgx = new Regex(arg[1..^1]);
-                    foreach (var proc in GetProcesses())
-                        if (rgx.IsMatch(proc))
+                    if (processNames == null)
+                    {
+                        var processes = RequestJson<JanDProcess[]>("get-process-list", "");
+                        var ls = new List<string>(processes.Length);
+                        foreach (var proc in processes)
+                            ls.Add(proc.Name);
+                        processNames = ls.ToArray().AsSpan();
+                    }
+                    foreach (var proc in processNames)
+                        if (Regex.IsMatch(proc, arg[1..^1]))
                             result.Add(proc);
                 }
                 else

@@ -6,7 +6,6 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -36,7 +35,7 @@ namespace JanD
                 Directory.SetCurrentDirectory(home);
             }
 
-            if (Environment.GetEnvironmentVariable("JAND_NO_VER") != "1")
+            if (Environment.GetEnvironmentVariable("JAND_NO_VER") == "1")
                 Console.WriteLine($"JanD v{ThisAssembly.Info.Version}");
             if (args.Length == 0)
             {
@@ -122,8 +121,7 @@ namespace JanD
                         var client = new IpcClient();
                         foreach (var process in client.GetProcessNames(args[1..]))
                         {
-                            var proc = JsonSerializer.Deserialize<JanDRuntimeProcess>(
-                                client.RequestString("get-process-info", process));
+                            var proc = client.RequestJson<JanDRuntimeProcess>("get-process-info", process);
 
                             Console.WriteLine(proc!.Name);
                             Info("Filename", proc.Filename);
@@ -379,7 +377,7 @@ Or you can contribute on GitHub!");
 
                     break;
                 }
-                case "events":
+                case "events-json":
                 {
                     var client = new IpcClient();
                     client.RequestString("subscribe-events", "255");
@@ -389,6 +387,18 @@ Or you can contribute on GitHub!");
                         var count = client.Stream.Read(bytes, 0, bytes.Length);
                         Console.WriteLine(Encoding.UTF8.GetString(bytes[..count]));
                     }
+                }
+                case "events":
+                {
+                    var client = new IpcClient();
+                    client.RequestString("subscribe-events", "255");
+                    client.ListenEvents(ev =>
+                    {
+                        Console.WriteLine($@"Event: {ev.Event}
+Process: {ev.Process}
+Value: {ev.Value}");
+                    });
+                    break;
                 }
                 case "flush":
                 {
@@ -473,7 +483,7 @@ Or you can contribute on GitHub!");
                 case "group":
                 case "grp":
                 {
-                    switch (args[1].ToLower())
+                    switch (args.Length > 1 ? args[1].ToLower() : null)
                     {
                         case "up":
                         case "start":
@@ -525,6 +535,9 @@ Or you can contribute on GitHub!");
 
                             break;
                         }
+                        default:
+                            Console.WriteLine("Unknown group command.");
+                            break;
                     }
 
                     break;
