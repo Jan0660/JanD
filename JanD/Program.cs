@@ -35,7 +35,7 @@ namespace JanD
                 Directory.SetCurrentDirectory(home);
             }
 
-            if (Environment.GetEnvironmentVariable("JAND_NO_VER") == "1")
+            if (Environment.GetEnvironmentVariable("JAND_NO_VER") != "1")
                 Console.WriteLine($"JanD v{ThisAssembly.Info.Version}");
             if (args.Length == 0)
             {
@@ -270,12 +270,6 @@ namespace JanD
                     if (events.HasFlag(DaemonEvents.ErrLog))
                         TailLog("err");
                     Console.WriteLine();
-                    if (OperatingSystem.IsWindows())
-                    {
-                        Console.WriteLine(
-                            "Woops, watching logs is not available on W*ndows because of cringeness issues with IPC.");
-                        return;
-                    }
 
                     client.RequestString("subscribe-events", ((int)events).ToString());
                     if (events.HasFlag(DaemonEvents.OutLog))
@@ -492,7 +486,8 @@ Value: {ev.Value}");
                                 JsonSerializer.Deserialize<GroupFile>(File.ReadAllText("./jand-group.json"),
                                     new JsonSerializerOptions()
                                     {
-                                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                                        ReadCommentHandling = JsonCommentHandling.Skip
                                     });
                             var client = new IpcClient();
                             var list = new List<String>();
