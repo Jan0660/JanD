@@ -542,8 +542,7 @@ Value: {ev.Value}");
                 {
                     var client = new IpcClient();
                     var type = args[1];
-                    var data = string.Join(' ', args[2..]);
-                    if (args[0].ToLower() == "request")
+                    var data = args[2]; if (args[0].ToLower() == "request")
                         Console.WriteLine($"Sending request: Type: `{type}`; Data: `{data}`");
                     Console.WriteLine(client.RequestString(type, data));
                     break;
@@ -557,7 +556,7 @@ Value: {ev.Value}");
                         {
                             Process = args[1],
                             Property = args[2],
-                            Data = String.Join(' ', args[3..])
+                            Data = args[3]
                         })));
                     break;
                 }
