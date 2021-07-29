@@ -39,7 +39,16 @@ namespace JanD
         {
             SendString(type, data);
             Span<byte> bytes = stackalloc byte[BufferSize];
-            return JsonSerializer.Deserialize<T>(bytes[..Stream.Read(bytes)]);
+            var count = Stream.Read(bytes);
+            try
+            {
+                return JsonSerializer.Deserialize<T>(bytes[..count]);
+            }
+            catch
+            {
+                Console.WriteLine(Encoding.UTF8.GetString(bytes[..count]));
+                return default;
+            }
         }
 
         public DaemonStatus GetStatus()
@@ -107,27 +116,18 @@ namespace JanD
             while (true)
             {
                 var bytesCount = 0;
-                var inDepth = 1;
-                var firstRead = true;
-                while (inDepth != 0)
+                var hitNewline = true;
+                // Read bytes until we hit a real newline
+                while (hitNewline)
                 {
                     var byt = Stream.ReadByte();
                     if (byt == -1)
-                    {
                         throw new Exception("Pipe closed.");
-                    }
 
                     bytes[bytesCount] = (byte) byt;
+                    if ((char) byt == '\n')
+                        hitNewline = false;
                     bytesCount++;
-                    var ch = (char) byt;
-                    if (ch == '{' && !firstRead)
-                        inDepth++;
-                    if (ch == '}')
-                    {
-                        inDepth--;
-                    }
-
-                    firstRead = false;
                 }
 
                 var ev = JsonSerializer.Deserialize<DaemonClientEvent>(bytes[..bytesCount]);

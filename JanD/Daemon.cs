@@ -502,6 +502,8 @@ namespace JanD
                         writer.WriteString("Value", data);
                     writer.WriteEndObject();
                     await writer.FlushAsync();
+                    connection.Stream.WriteByte((byte)'\n');
+                    await connection.Stream.FlushAsync();
                 }
                 catch
                 {

@@ -202,8 +202,7 @@ namespace JanD
                     {
                         // full logs
                         client.RequestString("subscribe-events", "255");
-                        var processes =
-                            JsonSerializer.Deserialize<JanDRuntimeProcess[]>(client.RequestString("get-processes", ""));
+                        var processes = client.RequestJson<JanDRuntimeProcess[]>("get-processes", "");
                         foreach (var proc in processes)
                         {
                             client.RequestString("subscribe-outlog-event", proc.Name);

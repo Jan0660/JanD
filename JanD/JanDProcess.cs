@@ -12,11 +12,13 @@ namespace JanD
     public class JanDProcess
     {
         public string Name { get; set; }
+
         /// <summary>
         /// DEPRECATED. Use Filename and Arguments instead.
         /// </summary>
         [Obsolete]
         public string Command { get; set; }
+
         public string Filename { get; set; }
         public string[] Arguments { get; set; }
         public string WorkingDirectory { get; set; }
@@ -146,6 +148,8 @@ namespace JanD
                             json.WriteEndObject();
                             json.Flush();
                             json.Dispose();
+                            con.Stream.WriteByte((byte)'\n');
+                            con.Stream.Flush();
                         }
                     }
                 }
