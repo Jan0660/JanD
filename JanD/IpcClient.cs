@@ -11,7 +11,7 @@ namespace JanD
     public class IpcClient
     {
         public NamedPipeClientStream Stream;
-        public const int BufferSize = 50_000;
+        public const int BufferSize = 200_000;
 
         public IpcClient(string pipeName = null)
         {
