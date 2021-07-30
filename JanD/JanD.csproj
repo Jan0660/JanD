@@ -3,12 +3,20 @@
     <PropertyGroup>
         <OutputType>Exe</OutputType>
         <TargetFramework>net5.0</TargetFramework>
-        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <AssemblyVersion>0.7.0</AssemblyVersion>
-        <InvariantGlobalization>true</InvariantGlobalization>
+        <PackageVersion>0.7.0</PackageVersion>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <Authors>Jan0660</Authors>
+        <Description>A process manager aiming for ease of use, predictable behaviour and respectable performance.</Description>
+        <RepositoryUrl>https://github.com/Jan0660/JanD</RepositoryUrl>
+        <PackageProjectUrl>https://jand.jan0660.dev</PackageProjectUrl>
+        <PackAsTool>true</PackAsTool>
+        <ToolCommandName>jand</ToolCommandName>
 
+        <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+        <InvariantGlobalization>true</InvariantGlobalization>
         <IlcOptimizationPreference>Speed</IlcOptimizationPreference>
-        <PublishTrimmed>true</PublishTrimmed>
+        <PublishTrimmed Condition="'$(RuntimeIdentifier)' != ''">true</PublishTrimmed>
         <TrimMode>Link</TrimMode>
         <IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
         <DebuggerSupport>false</DebuggerSupport>
@@ -18,9 +26,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Condition="'$(RuntimeIdentifier)' != 'linux-arm'" Include="Microsoft.DotNet.ILCompiler" Version="6.0.0-*" />
-        <PackageReference Condition="'$(RuntimeIdentifier)' == 'linux-arm64'" Include="runtime.linux-x64.Microsoft.DotNet.ILCompiler" Version="6.0.0-*" />
-        <PackageReference Include="ThisAssembly.AssemblyInfo" Version="1.0.8" />
+        <PackageReference Condition="'$(RuntimeIdentifier)' != ''" Include="Microsoft.DotNet.ILCompiler" Version="6.0.0-*" PrivateAssets="all" />
+        <PackageReference Include="ThisAssembly.AssemblyInfo" Version="1.0.8" PrivateAssets="all" />
     </ItemGroup>
     <ItemGroup>
         <TrimmerRootAssembly Include="JanD" />

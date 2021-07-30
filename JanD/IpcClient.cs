@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 
 namespace JanD
 {
-    public unsafe class IpcClient
+    public class IpcClient
     {
         public NamedPipeClientStream Stream;
         public const int BufferSize = 50_000;
