@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.IO.Pipes;
 using System.Linq;
 using System.Reflection;
@@ -87,5 +88,7 @@ namespace JanD
             else if (property.PropertyType == typeof(int))
                 property.SetValue(obj, int.Parse(value));
         }
+
+        public static string ToFullPath(this string path) => path.StartsWith('.') ? Path.GetFullPath(path) : path;
     }
 }

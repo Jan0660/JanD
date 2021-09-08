@@ -26,7 +26,7 @@ namespace JanD
         [Description("Write daemon's logging output to a file.")]
         public bool DaemonLogSave { get; set; } = true;
 
-        public string SavedVersion { get; set; } = ThisAssembly.Info.Version;
+        public string SavedVersion { get; set; } = Program.Version;
     }
 
     /// <summary>

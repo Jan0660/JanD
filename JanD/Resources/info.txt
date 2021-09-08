@@ -1,4 +1,4 @@
-[38;2;0;255;255mThe Jan process manager[39m
+[38;2;0;255;255mThe Jan process manager v{1}[39m
 {0} Made by Jan0660 (https://github.com/Jan0660)
 {0} Source: https://github.com/Jan0660/JanD
 {0} MIT License

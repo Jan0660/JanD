@@ -234,7 +234,7 @@ namespace JanD
                     j.WriteNumber("Processes", Processes.Count);
                     j.WriteBoolean("NotSaved", NotSaved);
                     j.WriteString("Directory", Directory.GetCurrentDirectory());
-                    j.WriteString("Version", ThisAssembly.Info.Version);
+                    j.WriteString("Version", Program.Version);
                     j.WriteEndObject();
                     j.Flush();
                     break;
@@ -374,7 +374,7 @@ namespace JanD
                 case "save-config":
                 {
                     Config.Processes = Processes.ToArray();
-                    Config.SavedVersion = ThisAssembly.Info.Version;
+                    Config.SavedVersion = Program.Version;
                     var json = JsonSerializer.Serialize(Config, new JsonSerializerOptions
                     {
                         WriteIndented = Config.FormatConfig

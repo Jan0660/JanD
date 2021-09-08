@@ -10,6 +10,7 @@
         <TargetFramework>net5.0</TargetFramework>
         <AssemblyVersion>0.7.0</AssemblyVersion>
         <PackageVersion>0.7.0</PackageVersion>
+<!--        <VersionSuffix>mogus</VersionSuffix>-->
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <Authors>Jan0660</Authors>
         <Description>A process manager aiming for ease of use, predictable behaviour and respectable performance.</Description>
@@ -29,8 +30,9 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="CommandLineParser" Version="2.9.0-preview1" />
         <PackageReference Condition="'$(RuntimeIdentifier)' != ''" Include="Microsoft.DotNet.ILCompiler" Version="6.0.0-*" />
-        <PackageReference Include="ThisAssembly.AssemblyInfo" Version="1.0.8" />
+        <PackageReference Include="ThisAssembly.Constants" Version="1.0.8" />
     </ItemGroup>
     <ItemGroup>
         <TrimmerRootAssembly Include="JanD" />
@@ -41,9 +43,12 @@
     <ItemGroup>
         <RdXmlFile Include="rd.xml" />
         <EmbeddedResource Include="Resources/info.txt" />
-        <EmbeddedResource Include="Resources/help.txt" />
         <EmbeddedResource Include="Resources/runit-run" />
         <EmbeddedResource Include="Resources/runit-conf-template" />
         <EmbeddedResource Include="Resources/systemd-template.service" />
+    </ItemGroup>
+    <ItemGroup>
+        <Constant Include="Version" Value="$(PackageVersion)" Condition="'$(VersionSuffix)' == ''" />
+        <Constant Include="Version" Value="$(PackageVersion)-$(VersionSuffix)" Condition="'$(VersionSuffix)' != ''" />
     </ItemGroup>
 </Project>
