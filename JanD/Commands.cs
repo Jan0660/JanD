@@ -56,13 +56,13 @@ namespace JanD
             [Value(1, Default = null, HelpText = "The command to start the new process with.", MetaName = "Command")]
             public string Command { get; set; }
 
-            [Value(2, Default = null, HelpText = "The arguments to execute the command with.", MetaName = "Arguments")]
+            [Value(2, HelpText = "The arguments to execute the command with.", MetaName = "Arguments")]
             public IEnumerable<string> Arguments { get; set; }
 
             public async Task Run()
             {
                 var client = new IpcClient();
-                if (Command == null && !Arguments.Any())
+                if (Command == null && Arguments == null)
                     client.DoRequests(client.GetProcessNames(new[] { Name }), "start-process");
                 else
                 {
