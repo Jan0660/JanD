@@ -26,6 +26,8 @@ namespace JanD
         public bool AutoRestart { get; set; } = true;
         public bool Enabled { get; set; } = true;
         public bool Watch { get; set; }
+        [JsonIgnore]
+        public int SafeIndex { get; set; }
 
         [JsonIgnore]
         public bool ShouldRestart =>

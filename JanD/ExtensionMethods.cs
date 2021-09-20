@@ -39,6 +39,7 @@ namespace JanD
             j.WriteBoolean("AutoRestart", proc.AutoRestart);
             j.WriteBoolean("Running", proc.Process != null);
             j.WriteBoolean("Watch", proc.Watch);
+            j.WriteNumber("SafeIndex", proc.SafeIndex);
         }
 
         /// <summary>
@@ -90,5 +91,18 @@ namespace JanD
         }
 
         public static string ToFullPath(this string path) => path.StartsWith('.') ? Path.GetFullPath(path) : path;
+
+        public static string[] FixArguments(this IEnumerable<string> argumentsEnumerable)
+        {
+            var arguments = argumentsEnumerable.ToArray();
+            for (var i = 0; i < arguments.Length; i++)
+            {
+                var arg = arguments[i];
+                if (arg.StartsWith("\\"))
+                    arguments[i] = arg[1..];
+            }
+
+            return arguments;
+        }
     }
 }

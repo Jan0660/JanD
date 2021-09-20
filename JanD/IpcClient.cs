@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO.Pipes;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -81,26 +82,35 @@ namespace JanD
             }
         }
 
+        public string GetProcessName(string arg)
+            => GetProcessNames(new[] { arg }).FirstOrDefault();
+
         public string[] GetProcessNames(ReadOnlySpan<string> args)
         {
-            Span<string> processNames = null;
+            Program.JanDRuntimeProcess[] processes = null;
+
+            Program.JanDRuntimeProcess[] ProcessList()
+            {
+                if (processes != null)
+                    return processes;
+                processes = RequestJson<Program.JanDRuntimeProcess[]>("get-processes", "");
+                return processes;
+            }
 
             var result = new List<string>();
             foreach (var arg in args)
             {
-                if (arg.StartsWith('/') && arg.EndsWith('/'))
+                if (Regex.IsMatch(arg, "^\\d"))
                 {
-                    if (processNames == null)
-                    {
-                        var processes = RequestJson<JanDProcess[]>("get-process-list", "");
-                        var ls = new List<string>(processes.Length);
-                        foreach (var proc in processes)
-                            ls.Add(proc.Name);
-                        processNames = ls.ToArray().AsSpan();
-                    }
-                    foreach (var proc in processNames)
-                        if (Regex.IsMatch(proc, arg[1..^1]))
-                            result.Add(proc);
+                    var index = int.Parse(arg);
+                    var proc = ProcessList().FirstOrDefault(p => p.SafeIndex == index);
+                    result.Add(proc?.Name ?? arg);
+                }
+                else if (arg.StartsWith('/') && arg.EndsWith('/'))
+                {
+                    foreach (var proc in ProcessList())
+                        if (Regex.IsMatch(proc.Name, arg[1..^1]))
+                            result.Add(proc.Name);
                 }
                 else
                     result.Add(arg);
@@ -124,8 +134,8 @@ namespace JanD
                     if (byt == -1)
                         throw new Exception("Pipe closed.");
 
-                    bytes[bytesCount] = (byte) byt;
-                    if ((char) byt == '\n')
+                    bytes[bytesCount] = (byte)byt;
+                    if ((char)byt == '\n')
                         hitNewline = false;
                     bytesCount++;
                 }

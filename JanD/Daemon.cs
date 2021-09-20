@@ -21,6 +21,7 @@ namespace JanD
         public static StreamWriter DaemonLogWriter;
         public static readonly CancellationTokenSource CancellationTokenSource = new();
         public static readonly List<DaemonConnection> Connections = new();
+        public static int LastSafeIndex = -1;
 
         public static JsonSerializerOptions PacketDeserializationOptions { get; } = new()
         {
@@ -107,6 +108,7 @@ namespace JanD
                 Directory.CreateDirectory("./logs");
             foreach (var proc in Config.Processes)
             {
+                proc.SafeIndex = ++LastSafeIndex;
                 try
                 {
                     if (proc.Enabled)
@@ -347,7 +349,8 @@ namespace JanD
                         Name = def.Name,
                         Filename = def.Filename,
                         Arguments = def.Arguments,
-                        WorkingDirectory = def.WorkingDirectory
+                        WorkingDirectory = def.WorkingDirectory,
+                        SafeIndex = ++LastSafeIndex
                     };
                     Processes.Add(proc);
                     NotSaved = true;

@@ -147,12 +147,19 @@ namespace JanD
             var processes = JsonSerializer.Deserialize<JanDRuntimeProcess[]>(json);
 
             int maxNameLength = 0;
+            int maxIndexLength = 0;
             foreach (var process in processes!)
+            {
                 if (process.Name.Length > maxNameLength)
                     maxNameLength = process.Name.Length;
+                if (process.SafeIndex.ToString().Length > maxIndexLength)
+                    maxIndexLength = process.SafeIndex.ToString().Length;
+            }
             maxNameLength = maxNameLength < 12 ? 14 : maxNameLength;
             var nameFormatString = $"{{0,-{maxNameLength + 2}}}";
+            var indexFormatString = $"{{0,-{maxIndexLength + 2}}}";
             Console.Write("{0,-6}", "R|E|A");
+            Console.Write(indexFormatString, "Id");
             Console.Write(nameFormatString, "Name");
             Console.Write("{0,-5}", "↺");
             Console.Write("{0,-10}", "PID");
@@ -167,6 +174,7 @@ namespace JanD
                 Console.Write((process.Running ? TrueMark : FalseMark) + "|" +
                               (process.Enabled ? TrueMark : FalseMark) + "|"
                               + (process.AutoRestart ? TrueMark : FalseMark) + " ");
+                Console.Write(indexFormatString, process.SafeIndex);
                 Console.Write(nameFormatString, process.Name);
                 Console.ForegroundColor = ConsoleColor.DarkGray;
                 Console.Write("{0,-5}",
@@ -323,6 +331,7 @@ namespace JanD
             public bool AutoRestart { get; set; }
             public bool Running { get; set; }
             public bool Watch { get; set; }
+            public int SafeIndex { get; set; }
         }
     }
 }

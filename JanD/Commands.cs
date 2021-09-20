@@ -56,11 +56,12 @@ namespace JanD
             [Value(1, Default = null, HelpText = "The command to start the new process with.", MetaName = "Command")]
             public string Command { get; set; }
 
-            [Value(2, HelpText = "The arguments to execute the command with.", MetaName = "Arguments")]
+            [Value(2, Default = null, HelpText = "The arguments to execute the command with.", MetaName = "Arguments")]
             public IEnumerable<string> Arguments { get; set; }
 
             public async Task Run()
             {
+                Arguments = Arguments.FixArguments();
                 var client = new IpcClient();
                 if (Command == null && Arguments == null)
                     client.DoRequests(client.GetProcessNames(new[] { Name }), "start-process");
@@ -200,11 +201,12 @@ namespace JanD
             [Value(1, Required = true, HelpText = "The command to start the new process with.", MetaName = "Command")]
             public string Command { get; set; }
 
-            [Value(2, Required = true, HelpText = "The arguments to execute the command with.", MetaName = "Arguments")]
+            [Value(2, Required = false, HelpText = "The arguments to execute the command with.", MetaName = "Arguments")]
             public IEnumerable<string> Arguments { get; set; }
 
             public async Task Run()
             {
+                Arguments = Arguments.FixArguments();
                 var client = new IpcClient();
                 var str = client.RequestString("new-process",
                     JsonSerializer.Serialize(new Daemon.JanDNewProcess(Name,
@@ -308,6 +310,7 @@ namespace JanD
                     });
                 }
 
+                Process = client.GetProcessName(Process);
                 if (Environment.GetEnvironmentVariable("JAND_AUTOFLUSH") != null
                     | Environment.GetEnvironmentVariable("JAND_AUTOFLUSH") == "1")
                 {
@@ -485,7 +488,7 @@ namespace JanD
             public async Task Run()
             {
                 var client = new IpcClient();
-                Console.WriteLine(client.RequestString("rename-process", OldName + ':' + NewName));
+                Console.WriteLine(client.RequestString("rename-process", client.GetProcessName(OldName) + ':' + NewName));
                 Program.DoProcessListIfEnabled(client);
             }
         }
@@ -503,7 +506,7 @@ namespace JanD
             {
                 var client = new IpcClient();
                 Console.WriteLine(client.RequestString("send-process-stdin-line",
-                    Process + ":" + String.Join(' ', Data)));
+                    client.GetProcessName(Process) + ":" + String.Join(' ', Data)));
             }
         }
 
@@ -666,7 +669,7 @@ namespace JanD
                 Console.WriteLine(client.RequestString("set-process-property", JsonSerializer.Serialize(
                     new SetPropertyIpcPacket
                     {
-                        Process = Process,
+                        Process = client.GetProcessName(Process),
                         Property = Property,
                         Data = Data
                     })));
