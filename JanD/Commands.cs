@@ -11,7 +11,6 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CommandLine;
-using CommandLine.Text;
 
 #pragma warning disable 1998
 // ReSharper disable UnusedAutoPropertyAccessor.Global
@@ -246,6 +245,7 @@ namespace JanD
         {
             [Option("pidfile", HelpText = "Writes own PID to file.")]
             public string PidFile { get; set; }
+
             public async Task Run()
             {
                 if (PidFile != null)
@@ -274,6 +274,7 @@ namespace JanD
         {
             [Option("lines", Default = 15, HelpText = "Number of lines to get.")]
             public int LineCount { get; set; }
+
             [Value(0, Default = null, MetaName = "Process", HelpText = "The process to get logs of.")]
             public string Process { get; set; }
 
@@ -546,7 +547,7 @@ namespace JanD
         }
 
         [Verb("config", HelpText = "View and edit configuration.")]
-        public class Config : ICommand
+        public class ConfigCommand : ICommand
         {
             [Value(0, Default = null, MetaName = "Name")]
             public string Name { get; set; }
@@ -557,21 +558,7 @@ namespace JanD
             public async Task Run()
             {
                 var client = new IpcClient();
-                if (Name == null)
-                {
-                    var config = client.RequestJson<Config>("get-config", "");
-                    var type = config.GetType();
-                    foreach (var property in type.GetProperties(BindingFlags.Instance | BindingFlags.Public))
-                    {
-                        if (property.PropertyType == typeof(bool))
-                            InfoBool(property.Name, (bool)property.GetValue(config)!);
-                        else if (property.PropertyType == typeof(int))
-                            Info(property.Name, property.GetValue(config)!.ToString());
-
-                        Program.LogDescription(property);
-                    }
-                }
-                else if (Name != null && Value == null)
+                if (Name != null && Value != null)
                 {
                     var res = client.RequestString("set-config", Name + ":" + Value);
                     if (res == "done")
@@ -589,25 +576,42 @@ namespace JanD
                     else
                     {
                         Console.BackgroundColor = ConsoleColor.DarkRed;
-                        Console.WriteLine("Setting option failed.");
+                        Console.Write("Setting option failed.");
                         Console.ResetColor();
+                        Console.WriteLine();
                         Console.WriteLine(res);
                     }
                 }
-                else
+                else if (Name != null && Value == null)
                 {
                     var config = client.RequestJson<Config>("get-config", "");
                     var type = config.GetType();
                     var property = type.GetPropertyCaseInsensitive(Name);
                     if (property != null)
                     {
-                        Console.WriteLine(property.GetValue(config)!.ToString());
+                        if (property.PropertyType == typeof(bool))
+                            InfoBool(property.Name, (bool)property.GetValue(config)!);
+                        else if (property.PropertyType == typeof(int))
+                            Info(property.Name, property.GetValue(config)!.ToString());
 
                         Program.LogDescription(property);
                     }
                     else
                     {
                         Console.WriteLine("Invalid property.");
+                    }
+                }
+                else
+                {
+                    var config = client.RequestJson<Config>("get-config", "");
+                    foreach (var property in typeof(Config).GetProperties(BindingFlags.Instance | BindingFlags.Public))
+                    {
+                        if (property.PropertyType == typeof(bool))
+                            InfoBool(property.Name, (bool)property.GetValue(config)!);
+                        else if (property.PropertyType == typeof(int))
+                            Info(property.Name, property.GetValue(config)!.ToString());
+
+                        Program.LogDescription(property);
                     }
                 }
             }
