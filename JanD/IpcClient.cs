@@ -18,7 +18,16 @@ namespace JanD
         {
             pipeName ??= Program.PipeName;
             Stream = new(".", pipeName, PipeDirection.InOut);
-            Stream.Connect();
+            var timeout = int.Parse(Environment.GetEnvironmentVariable("JAND_TIMEOUT") ?? "3000");
+            try
+            {
+                Stream.Connect(timeout);
+            }
+            catch (TimeoutException)
+            {
+                Console.WriteLine($"Could not connect to pipe {pipeName} within {timeout} millisecond timeout.");
+                Environment.Exit(1);
+            }
         }
 
         public void SendString(string type, string data)
