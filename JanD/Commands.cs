@@ -5,6 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -61,7 +62,7 @@ namespace JanD
 
             public async Task Run()
             {
-                Arguments = Arguments.FixArguments();
+                Arguments = Arguments?.FixArguments();
                 var client = new IpcClient();
                 if (Command == null && Arguments == null)
                     client.DoRequests(client.GetProcessNames(new[] { Name }), "start-process");
@@ -201,7 +202,8 @@ namespace JanD
             [Value(1, Required = true, HelpText = "The command to start the new process with.", MetaName = "Command")]
             public string Command { get; set; }
 
-            [Value(2, Required = false, HelpText = "The arguments to execute the command with.", MetaName = "Arguments")]
+            [Value(2, Required = false, HelpText = "The arguments to execute the command with.",
+                MetaName = "Arguments")]
             public IEnumerable<string> Arguments { get; set; }
 
             public async Task Run()
@@ -242,8 +244,12 @@ namespace JanD
         [Verb("start-daemon", HelpText = "Start the daemon.")]
         public class StartDaemon : ICommand
         {
+            [Option("pidfile", HelpText = "Writes own PID to file.")]
+            public string PidFile { get; set; }
             public async Task Run()
             {
+                if (PidFile != null)
+                    await File.WriteAllTextAsync(PidFile, Process.GetCurrentProcess().Id.ToString());
                 await Daemon.Start();
             }
         }
@@ -406,7 +412,7 @@ namespace JanD
                             var service = Program.GetResourceString("systemd-template.service");
                             service = String.Format(service, Username, Environment.GetEnvironmentVariable("PATH"),
                                 HomePath,
-                                Program.PipeName, Process.GetCurrentProcess().MainModule?.FileName ?? "jand");
+                                Program.PipeName, await Program.GetExecutablePath());
                             var location = "/etc/systemd/system/jand-" + Username + ".service";
                             File.WriteAllText(location, service);
                             Console.WriteLine($"SystemD service file installed in {location}");
@@ -427,7 +433,7 @@ namespace JanD
                                     String.Format(Program.GetResourceString("runit-conf-template"), Username,
                                         HomePath)), File.WriteAllTextAsync($"{path}/run",
                                     String.Format(Program.GetResourceString("runit-run"),
-                                        Process.GetCurrentProcess().MainModule?.FileName ?? "jand")));
+                                        await Program.GetExecutablePath())));
                                 await Task.WhenAll(Process.Start("chmod", $"755 \"{path}/run\"")!.WaitForExitAsync(),
                                     Process.Start("chmod", $"755 \"{path}/conf\"")!.WaitForExitAsync());
                                 Console.WriteLine($"Installed service file in {path}");
@@ -436,6 +442,32 @@ namespace JanD
                             }
                             else
                                 Console.WriteLine("Unknown folder structure.");
+
+                            break;
+                        }
+                        case "init":
+                        {
+                            Console.WriteLine("Detected 'init'...");
+                            if (Directory.Exists("/run/openrc") && Directory.Exists("/etc/init.d"))
+                            {
+                                Console.WriteLine("Detected OpenRC...");
+                                var file = $"/etc/init.d/jand-{Username}";
+                                await File.WriteAllTextAsync(file,
+                                    String.Format(Program.GetResourceString("openrc.sh").Replace("\r", ""),
+                                        // {0}, {1}, {2}, {3}, {4}
+                                        Environment.GetEnvironmentVariable("PATH"),
+                                        HomePath,
+                                        Program.PipeName,
+                                        await Program.GetExecutablePath(),
+                                        Username));
+                                await Process.Start("chmod", $"755 \"/etc/init.d/jand-{Username}\"")!
+                                    .WaitForExitAsync();
+                                Console.WriteLine($"OpenRC service file installed in {file}");
+                                Console.WriteLine("To enable the service:");
+                                Console.WriteLine($"rc-update add jand-{Username}");
+                                Console.WriteLine("To start now:");
+                                Console.WriteLine($"rc-service jand-{Username} start");
+                            }
 
                             break;
                         }
@@ -488,7 +520,8 @@ namespace JanD
             public async Task Run()
             {
                 var client = new IpcClient();
-                Console.WriteLine(client.RequestString("rename-process", client.GetProcessName(OldName) + ':' + NewName));
+                Console.WriteLine(
+                    client.RequestString("rename-process", client.GetProcessName(OldName) + ':' + NewName));
                 Program.DoProcessListIfEnabled(client);
             }
         }

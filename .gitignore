@@ -8,3 +8,4 @@ riderModule.iml
 config.json
 logs/
 .obsidian/
+daemon.log

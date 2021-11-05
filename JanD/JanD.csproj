@@ -10,13 +10,13 @@
         <TargetFramework>net5.0</TargetFramework>
         <AssemblyVersion>0.7.0</AssemblyVersion>
         <PackageVersion>0.7.0</PackageVersion>
-<!--        <VersionSuffix>mogus</VersionSuffix>-->
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <Authors>Jan0660</Authors>
         <Description>A process manager aiming for ease of use, predictable behaviour and respectable performance.</Description>
         <RepositoryUrl>https://github.com/Jan0660/JanD</RepositoryUrl>
         <PackageProjectUrl>https://jand.jan0660.dev</PackageProjectUrl>
 
+        <!--NativeAOT and publish configuration-->
         <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
         <InvariantGlobalization>true</InvariantGlobalization>
         <IlcOptimizationPreference>Speed</IlcOptimizationPreference>
@@ -36,16 +36,13 @@
     </ItemGroup>
     <ItemGroup>
         <TrimmerRootAssembly Include="JanD" />
-    </ItemGroup>
-    <ItemGroup>
         <FileConstant Include="@(Content)" />
-    </ItemGroup>
-    <ItemGroup>
         <RdXmlFile Include="rd.xml" />
         <EmbeddedResource Include="Resources/info.txt" />
         <EmbeddedResource Include="Resources/runit-run" />
         <EmbeddedResource Include="Resources/runit-conf-template" />
         <EmbeddedResource Include="Resources/systemd-template.service" />
+        <EmbeddedResource Include="Resources/openrc.sh" />
     </ItemGroup>
     <ItemGroup>
         <Constant Include="Version" Value="$(PackageVersion)" Condition="'$(VersionSuffix)' == ''" />

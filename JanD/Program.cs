@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -72,7 +71,7 @@ namespace JanD
                 {
                     await new Commands.InfoCommand().Run();
                 }
-                else if (error is HelpVerbRequestedError || error is HelpRequestedError)
+                else if (error is HelpVerbRequestedError or HelpRequestedError)
                 {
                     var helpText = HelpText.AutoBuild(parserResult, h =>
                     {
@@ -89,7 +88,8 @@ namespace JanD
                             h.Copyright = "";
                             if (verb.HelpText != null)
                                 h.AddPreOptionsLine(verb.HelpText);
-                            var examples = parserResult.TypeInfo.Current.GetCustomAttribute<ExamplesAttribute>()?.Examples;
+                            var examples = parserResult.TypeInfo.Current.GetCustomAttribute<ExamplesAttribute>()
+                                ?.Examples;
                             if (examples != null)
                             {
                                 h.AddPostOptionsLine("If an option ends with $, that means you can use Regex.");
@@ -97,6 +97,7 @@ namespace JanD
                                 foreach (var example in examples)
                                     h.AddPostOptionsLine(example);
                             }
+
                             h.AutoHelp = false;
                             h.AutoVersion = false;
                         }
@@ -155,6 +156,7 @@ namespace JanD
                 if (process.SafeIndex.ToString().Length > maxIndexLength)
                     maxIndexLength = process.SafeIndex.ToString().Length;
             }
+
             maxNameLength = maxNameLength < 12 ? 14 : maxNameLength;
             var nameFormatString = $"{{0,-{maxNameLength + 2}}}";
             var indexFormatString = $"{{0,-{maxIndexLength + 2}}}";
@@ -245,6 +247,24 @@ namespace JanD
             }
         }
 
+        /// <summary>
+        /// Gets the output of a process and automatically trims whitespace.
+        /// </summary>
+        /// <param name="filename"></param>
+        /// <param name="arguments"></param>
+        /// <returns>The process' stdout with trimmed whitespace.</returns>
+        public static async Task<string> ProcessOutputAsync(string filename, string arguments)
+        {
+            using var process = Process.Start(new ProcessStartInfo(filename, arguments)
+            {
+                RedirectStandardError = true,
+                RedirectStandardOutput = true
+            });
+            await process!.WaitForExitAsync();
+
+            return (await process.StandardOutput.ReadToEndAsync()).Trim();
+        }
+
         public static void DoChecks(IpcClient client) => DoChecks(client.GetStatus());
 
         public static void DoChecks(DaemonStatus status)
@@ -332,6 +352,16 @@ namespace JanD
             public bool Running { get; set; }
             public bool Watch { get; set; }
             public int SafeIndex { get; set; }
+        }
+
+        public static async Task<string> GetExecutablePath()
+        {
+            var arg = Environment.GetCommandLineArgs()[0];
+            if(arg.EndsWith(".dll"))
+                arg = arg[..^4];
+            if (!arg.StartsWith('.'))
+                return await ProcessOutputAsync("which", arg);
+            return Path.GetFullPath(arg);
         }
     }
 }

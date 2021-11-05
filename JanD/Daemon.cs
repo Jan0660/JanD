@@ -191,7 +191,7 @@ namespace JanD
                         PipeRead();
                         NewPipeServer();
                     },
-                    new object());
+                    null);
             }
 
             Processes = Config.Processes.ToList();
