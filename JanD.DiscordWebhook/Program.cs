@@ -25,10 +25,10 @@ namespace JanD.DiscordWebhook
             eventClient.ListenEvents(ev =>
             {
                 Console.WriteLine(ev.Event);
-                JanD.Program.JanDRuntimeProcess info;
+                JanDRuntimeProcess info;
                 try
                 {
-                    info = client.RequestJson<JanD.Program.JanDRuntimeProcess>("get-process-info", ev.Process);
+                    info = client.RequestJson<JanDRuntimeProcess>("get-process-info", ev.Process);
                 }
                 catch
                 {

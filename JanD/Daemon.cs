@@ -8,6 +8,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+// ReSharper disable AccessToModifiedClosure
 
 #pragma warning disable 4014
 

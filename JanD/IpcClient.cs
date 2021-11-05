@@ -96,13 +96,13 @@ namespace JanD
 
         public string[] GetProcessNames(ReadOnlySpan<string> args)
         {
-            Program.JanDRuntimeProcess[] processes = null;
+            JanDRuntimeProcess[] processes = null;
 
-            Program.JanDRuntimeProcess[] ProcessList()
+            JanDRuntimeProcess[] ProcessList()
             {
                 if (processes != null)
                     return processes;
-                processes = RequestJson<Program.JanDRuntimeProcess[]>("get-processes", "");
+                processes = RequestJson<JanDRuntimeProcess[]>("get-processes", "");
                 return processes;
             }
 

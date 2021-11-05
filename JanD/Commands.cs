@@ -1,16 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CommandLine;
+
+// ReSharper disable UnusedType.Global
 
 #pragma warning disable 1998
 // ReSharper disable UnusedAutoPropertyAccessor.Global
@@ -76,7 +76,7 @@ namespace JanD
                     Console.WriteLine(str);
                 }
 
-                Program.DoProcessListIfEnabled(client);
+                Util.DoProcessListIfEnabled(client);
             }
         }
 
@@ -114,7 +114,7 @@ namespace JanD
             {
                 var args = Processes.ToArray();
                 var client = new IpcClient();
-                Program.DoProcessList(client,
+                Util.DoProcessList(client,
                     args.Length > 1 && args[1].StartsWith('/') && args[1].EndsWith('/')
                         ? new Regex(args[1][1..^1])
                         : null);
@@ -163,14 +163,14 @@ namespace JanD
             {
                 if (Processes == null || !Processes.Any())
                 {
-                    Console.Write(Program.GetResourceString("info.txt"), Program.TextLogo, Program.Version);
+                    Console.Write(Util.GetResourceString("info.txt"), Program.TextLogo, Program.Version);
                 }
                 else
                 {
                     var client = new IpcClient();
                     foreach (var process in client.GetProcessNames(Processes.ToArray()))
                     {
-                        var proc = client.RequestJson<Program.JanDRuntimeProcess>("get-process-info", process);
+                        var proc = client.RequestJson<JanDRuntimeProcess>("get-process-info", process);
 
                         Console.WriteLine(proc!.Name);
                         Info("Filename", proc.Filename);
@@ -214,7 +214,7 @@ namespace JanD
                         Command.ToFullPath(), Arguments?.ToArray() ?? Array.Empty<string>(),
                         Directory.GetCurrentDirectory())));
                 Console.WriteLine(str);
-                Program.DoProcessListIfEnabled(client);
+                Util.DoProcessListIfEnabled(client);
             }
         }
 
@@ -265,7 +265,7 @@ namespace JanD
                 Info("Processes", status.Processes.ToString());
                 InfoBool("NotSaved", status.NotSaved);
                 Info("Version", status.Version);
-                Program.DoChecks(client);
+                Util.DoChecks(client);
             }
         }
 
@@ -286,7 +286,7 @@ namespace JanD
                 {
                     // full logs
                     client.RequestString("subscribe-events", "255");
-                    var processes = client.RequestJson<Program.JanDRuntimeProcess[]>("get-processes", "");
+                    var processes = client.RequestJson<JanDRuntimeProcess[]>("get-processes", "");
                     foreach (var proc in processes)
                     {
                         client.RequestString("subscribe-outlog-event", proc.Name);
@@ -377,7 +377,7 @@ namespace JanD
             {
                 var client = new IpcClient();
                 client.DoRequests(client.GetProcessNames(Processes.ToArray()), "delete-process");
-                Program.DoProcessListIfEnabled(client);
+                Util.DoProcessListIfEnabled(client);
             }
         }
 
@@ -398,7 +398,7 @@ namespace JanD
                     return;
                 }
 
-                if (Program.getuid() != 0 || Username == null)
+                if (Util.getuid() != 0 || Username == null)
                 {
                     Console.WriteLine("Run the following command as root to install the service file:");
                     Console.WriteLine(
@@ -412,10 +412,10 @@ namespace JanD
                         case "systemd":
                         {
                             Console.WriteLine("Detected SystemD...");
-                            var service = Program.GetResourceString("systemd-template.service");
+                            var service = Util.GetResourceString("systemd-template.service");
                             service = String.Format(service, Username, Environment.GetEnvironmentVariable("PATH"),
                                 HomePath,
-                                Program.PipeName, await Program.GetExecutablePath());
+                                Program.PipeName, await Util.GetExecutablePath());
                             var location = "/etc/systemd/system/jand-" + Username + ".service";
                             File.WriteAllText(location, service);
                             Console.WriteLine($"SystemD service file installed in {location}");
@@ -433,10 +433,10 @@ namespace JanD
                                 Console.WriteLine("Creating...");
                                 Directory.CreateDirectory(path);
                                 await Task.WhenAll(File.WriteAllTextAsync($"{path}/conf",
-                                    String.Format(Program.GetResourceString("runit-conf-template"), Username,
+                                    String.Format(Util.GetResourceString("runit-conf-template"), Username,
                                         HomePath)), File.WriteAllTextAsync($"{path}/run",
-                                    String.Format(Program.GetResourceString("runit-run"),
-                                        await Program.GetExecutablePath())));
+                                    String.Format(Util.GetResourceString("runit-run"),
+                                        await Util.GetExecutablePath())));
                                 await Task.WhenAll(Process.Start("chmod", $"755 \"{path}/run\"")!.WaitForExitAsync(),
                                     Process.Start("chmod", $"755 \"{path}/conf\"")!.WaitForExitAsync());
                                 Console.WriteLine($"Installed service file in {path}");
@@ -456,12 +456,12 @@ namespace JanD
                                 Console.WriteLine("Detected OpenRC...");
                                 var file = $"/etc/init.d/jand-{Username}";
                                 await File.WriteAllTextAsync(file,
-                                    String.Format(Program.GetResourceString("openrc.sh").Replace("\r", ""),
+                                    String.Format(Util.GetResourceString("openrc.sh").Replace("\r", ""),
                                         // {0}, {1}, {2}, {3}, {4}
                                         Environment.GetEnvironmentVariable("PATH"),
                                         HomePath,
                                         Program.PipeName,
-                                        await Program.GetExecutablePath(),
+                                        await Util.GetExecutablePath(),
                                         Username));
                                 await Process.Start("chmod", $"755 \"/etc/init.d/jand-{Username}\"")!
                                     .WaitForExitAsync();
@@ -498,6 +498,7 @@ namespace JanD
                     var count = client.Stream.Read(bytes, 0, bytes.Length);
                     Console.WriteLine(Encoding.UTF8.GetString(bytes[..count]));
                 }
+                // ReSharper disable once FunctionNeverReturns
             }
         }
 
@@ -525,7 +526,7 @@ namespace JanD
                 var client = new IpcClient();
                 Console.WriteLine(
                     client.RequestString("rename-process", client.GetProcessName(OldName) + ':' + NewName));
-                Program.DoProcessListIfEnabled(client);
+                Util.DoProcessListIfEnabled(client);
             }
         }
 
@@ -571,7 +572,7 @@ namespace JanD
                         Console.Write(Value);
                         Console.ResetColor();
                         Console.WriteLine(".");
-                        Program.DoChecks(client);
+                        Util.DoChecks(client);
                     }
                     else
                     {
@@ -594,7 +595,7 @@ namespace JanD
                         else if (property.PropertyType == typeof(int))
                             Info(property.Name, property.GetValue(config)!.ToString());
 
-                        Program.LogDescription(property);
+                        Util.LogDescription(property);
                     }
                     else
                     {
@@ -611,7 +612,7 @@ namespace JanD
                         else if (property.PropertyType == typeof(int))
                             Info(property.Name, property.GetValue(config)!.ToString());
 
-                        Program.LogDescription(property);
+                        Util.LogDescription(property);
                     }
                 }
             }
@@ -721,7 +722,7 @@ namespace JanD
             public async Task Run()
             {
                 var client = new IpcClient();
-                var processes = client.RequestJson<Program.JanDRuntimeProcess[]>("get-processes", "");
+                var processes = client.RequestJson<JanDRuntimeProcess[]>("get-processes", "");
                 for (var i = 0; i < processes.Length; i++)
                 {
                     Console.Write(processes[i].Name);
