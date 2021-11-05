@@ -272,6 +272,8 @@ namespace JanD
         [Verb("logs", HelpText = "Get recent logs for a process and watch for new logs.")]
         public class Logs : ICommand
         {
+            [Option("lines", Default = 15, HelpText = "Number of lines to get.")]
+            public int LineCount { get; set; }
             [Value(0, Default = null, MetaName = "Process", HelpText = "The process to get logs of.")]
             public string Process { get; set; }
 
@@ -326,7 +328,7 @@ namespace JanD
 
                 var status = client.GetStatus();
 
-                void TailLog(string whichStd, int lineCount = 15)
+                void TailLog(string whichStd)
                 {
                     Console.WriteLine($"Getting last 15 lines of std{whichStd} logs...");
                     var filename = Path.Combine(status.Directory, "logs/" + Process + $"-{whichStd}.log");
@@ -339,7 +341,7 @@ namespace JanD
                     var fs = new FileStream(filename,
                         FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
                     var reader = new StreamReader(fs);
-                    var lines = reader.Tail(lineCount);
+                    var lines = reader.Tail(LineCount);
                     reader.Close();
                     foreach (var line in lines)
                         Console.WriteLine(line);
