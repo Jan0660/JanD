@@ -331,7 +331,7 @@ namespace JanD
 
                 void TailLog(string whichStd)
                 {
-                    Console.WriteLine($"Getting last 15 lines of std{whichStd} logs...");
+                    Console.WriteLine($"Getting last {LineCount} lines of std{whichStd} logs...");
                     var filename = Path.Combine(status.Directory, "logs/" + Process + $"-{whichStd}.log");
                     if (!File.Exists(filename))
                     {
@@ -728,6 +728,38 @@ namespace JanD
                     Console.Write(processes[i].Name);
                     if (i != processes.Length - 1)
                         Console.Write(' ');
+                }
+            }
+        }
+
+        [Verb("attach")]
+        public class Attach : ICommand
+        {
+            [Value(0, MetaName = "Process", Required = true, HelpText = "The process to attach to.")]
+            public string Process { get; set; }
+            public async Task Run()
+            {
+                // get process
+                var client = new IpcClient();
+                var name = client.GetProcessName(Process);
+                var logWatch = Task.Run(() =>
+                {
+                    var logWatcher = new IpcClient();
+                    logWatcher.RequestString("subscribe-events", "255");
+                    logWatcher.RequestString("subscribe-outlog-event", name);
+                    logWatcher.RequestString("subscribe-errlog-event", name);
+                    logWatcher.ListenEvents(ev =>
+                    {
+                        if (ev.Event == "outlog")
+                            Console.Write(ev.Value);
+                        else if (ev.Event == "errlog")
+                            Console.Error.Write(ev.Value);
+                    });
+                });
+                while (true)
+                {
+                    var ln = Console.ReadLine();
+                    client.RequestString("send-process-stdin-line", name + ':' + ln);
                 }
             }
         }

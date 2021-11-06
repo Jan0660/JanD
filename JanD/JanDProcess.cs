@@ -26,8 +26,7 @@ namespace JanD
         public bool AutoRestart { get; set; } = true;
         public bool Enabled { get; set; } = true;
         public bool Watch { get; set; }
-        [JsonIgnore]
-        public int SafeIndex { get; set; }
+        [JsonIgnore] public int SafeIndex { get; set; }
 
         [JsonIgnore]
         public bool ShouldRestart =>
@@ -138,7 +137,7 @@ namespace JanD
                 try
                 {
                     foreach (var con in Daemon.Connections.Where(c =>
-                        c.Events.HasFlag((whichStd == "out" ? DaemonEvents.OutLog : DaemonEvents.ErrLog))))
+                                 c.Events.HasFlag((whichStd == "out" ? DaemonEvents.OutLog : DaemonEvents.ErrLog))))
                     {
                         if ((whichStd == "out" ? con.OutLogSubs.Contains(Name) : con.ErrLogSubs.Contains(Name)))
                         {

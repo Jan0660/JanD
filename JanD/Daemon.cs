@@ -8,6 +8,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+
 // ReSharper disable AccessToModifiedClosure
 
 #pragma warning disable 4014
@@ -124,7 +125,8 @@ namespace JanD
 
             void NewPipeServer()
             {
-                var pipeServer = new NamedPipeServerStream(Program.PipeName, PipeDirection.InOut, 250,
+                var pipeServer = new NamedPipeServerStream(Program.PipeName, PipeDirection.InOut,
+                    NamedPipeServerStream.MaxAllowedServerInstances,
                     OperatingSystem.IsWindows() ? PipeTransmissionMode.Message : PipeTransmissionMode.Byte);
                 pipeServer.BeginWaitForConnection(_ =>
                     {
