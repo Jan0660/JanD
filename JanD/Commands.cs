@@ -91,13 +91,15 @@ namespace JanD
 
             public async Task Run()
             {
-                var processes = Processes.ToArray();
                 var client = new IpcClient();
+                var processes = client.GetProcessNames(Processes.ToArray()).ToArray();
+                var val = Environment.GetCommandLineArgs()[1].Equals("disable", StringComparison.OrdinalIgnoreCase)
+                    ? "false"
+                    : "true";
                 for (var i = 0; i < processes.Length; i++)
-                    processes[i] = processes[i] + ":" +
-                                   (processes[0].ToLower() == "disable" ? "false" : "true");
+                    processes[i] = processes[i] + ":" + val;
 
-                client.DoRequests(client.GetProcessNames(processes[1..]), "set-enabled");
+                client.DoRequests(processes, "set-enabled");
             }
         }
 
@@ -737,6 +739,7 @@ namespace JanD
         {
             [Value(0, MetaName = "Process", Required = true, HelpText = "The process to attach to.")]
             public string Process { get; set; }
+
             public async Task Run()
             {
                 // get process
