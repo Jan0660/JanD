@@ -19,7 +19,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Condition="'$(RuntimeIdentifier)' != ''" Include="Microsoft.DotNet.ILCompiler" Version="6.0.0-*" />
+        <PackageReference Condition="'$(RuntimeIdentifier)' != ''" Include="Microsoft.DotNet.ILCompiler" Version="7.0.0-*" />
         <ProjectReference Include="../JanD/JanD.csproj" ExcludeAssets="JanD.Program" />
     </ItemGroup>
 

@@ -15,7 +15,7 @@ namespace JanD
         [DllImport("libc")]
         public static extern uint getuid();
 
-        public const string TrueMark = "[38;2;0;255;0m?[0m";
+        public const string TrueMark = "[38;2;0;255;0m\u2713[0m";
         public const string FalseMark = "[38;2;255;0;0mx[0m";
 
 
