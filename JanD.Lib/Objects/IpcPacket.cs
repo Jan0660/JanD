@@ -1,4 +1,4 @@
-﻿namespace JanD
+﻿namespace JanD.Lib.Objects
 {
     public class IpcPacket
     {

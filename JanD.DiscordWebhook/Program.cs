@@ -4,6 +4,8 @@ using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Jan0660.DiscordWebhook;
+using JanD.Lib;
+using JanD.Lib.Objects;
 
 namespace JanD.DiscordWebhook
 {
@@ -16,9 +18,9 @@ namespace JanD.DiscordWebhook
             var discord = new DiscordWebhookClient(config!.WebhookId, config.WebhookToken);
             Console.WriteLine("r");
             var eventClient = new IpcClient(Environment.GetEnvironmentVariable("JAND_PIPE") ??
-                                            JanD.Program.DefaultPipeName);
+                                            IpcClient.DefaultPipeName);
             var client = new IpcClient(Environment.GetEnvironmentVariable("JAND_PIPE") ??
-                                       JanD.Program.DefaultPipeName);
+                                       IpcClient.DefaultPipeName);
             Console.WriteLine("b");
             Console.WriteLine(eventClient.RequestString("subscribe-events", "255"));
             Console.WriteLine("h");

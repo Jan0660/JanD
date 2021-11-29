@@ -1,24 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.IO.Pipes;
-using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using JanD.Lib.Objects;
 
-namespace JanD
+namespace JanD.Lib
 {
     public class IpcClient
     {
+        public const string DefaultPipeName = "jand";
         public NamedPipeClientStream Stream;
         public const int BufferSize = 200_000;
 
-        public IpcClient(string pipeName = null)
+        public IpcClient(string pipeName = DefaultPipeName, int timeout = 3000)
         {
-            pipeName ??= Program.PipeName;
             Stream = new(".", pipeName, PipeDirection.InOut);
-            var timeout = int.Parse(Environment.GetEnvironmentVariable("JAND_TIMEOUT") ?? "3000");
             try
             {
                 Stream.Connect(timeout);
@@ -56,6 +53,7 @@ namespace JanD
             }
             catch
             {
+                // todo: throw exception
                 Console.WriteLine(Encoding.UTF8.GetString(bytes[..count]));
                 return default;
             }
@@ -66,7 +64,7 @@ namespace JanD
             SendString("status", "");
             Span<byte> bytes = stackalloc byte[BufferSize];
             var count = Stream.Read(bytes);
-            return JsonSerializer.Deserialize<DaemonStatus>(bytes[..count]);
+            return JsonSerializer.Deserialize<DaemonStatus>(bytes[..count])!;
         }
 
         public string ReadString()

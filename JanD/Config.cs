@@ -30,7 +30,7 @@ namespace JanD
     }
 
     /// <summary>
-    /// Use for describing properties. Used in the `config` command.
+    /// Used for describing properties. Used in the `config` command of the JanD CLI.
     /// </summary>
     public class DescriptionAttribute : Attribute
     {

@@ -518,17 +518,6 @@ namespace JanD
             }
         }
 
-        public class JanDNewProcess
-        {
-            public string Name { get; set; }
-            public string Filename { get; set; }
-            public string[] Arguments { get; set; }
-            public string WorkingDirectory { get; set; }
-
-            public JanDNewProcess(string name, string filename, string[] arguments, string workingDirectory) =>
-                (Name, Filename, Arguments, WorkingDirectory) = (name, filename, arguments, workingDirectory);
-        }
-
         public class DaemonConnection
         {
             public NamedPipeServerStream Stream;
@@ -544,42 +533,6 @@ namespace JanD
                 ErrLogSubs = new();
             }
         }
-    }
-
-    public class DaemonStatus
-    {
-        public int Processes { get; set; }
-        public bool NotSaved { get; set; }
-        public string Directory { get; set; }
-        public string Version { get; set; }
-    }
-
-    [Flags]
-    public enum DaemonEvents
-    {
-        // outlog
-        OutLog = 0b0000_0001,
-
-        // errlog
-        ErrLog = 0b0000_0010,
-
-        // procstop
-        ProcessStopped = 0b0000_0100,
-
-        // procstart
-        ProcessStarted = 0b0000_1000,
-
-        // procadd
-        ProcessAdded = 0b0001_0000,
-
-        // procdel
-        ProcessDeleted = 0b0010_0000,
-
-        // procren
-        ProcessRenamed = 0b0100_0000,
-
-        // procprop
-        ProcessPropertyUpdated = 0b1000_0000,
     }
 
     public class DaemonException : Exception

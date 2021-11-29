@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JanD.DiscordWebhook", "JanD
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JanD.DocGeneration", "JanD.DocGeneration\JanD.DocGeneration.csproj", "{8EFC9CAE-799C-41A2-AF56-0499201DF7C0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JanD.Lib", "JanD.Lib\JanD.Lib.csproj", "{0D64FFCB-6F30-48AF-B735-56FE2BD31537}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{8EFC9CAE-799C-41A2-AF56-0499201DF7C0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8EFC9CAE-799C-41A2-AF56-0499201DF7C0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8EFC9CAE-799C-41A2-AF56-0499201DF7C0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0D64FFCB-6F30-48AF-B735-56FE2BD31537}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0D64FFCB-6F30-48AF-B735-56FE2BD31537}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0D64FFCB-6F30-48AF-B735-56FE2BD31537}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0D64FFCB-6F30-48AF-B735-56FE2BD31537}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

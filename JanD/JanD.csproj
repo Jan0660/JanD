@@ -48,4 +48,7 @@
         <Constant Include="Version" Value="$(PackageVersion)" Condition="'$(VersionSuffix)' == ''" />
         <Constant Include="Version" Value="$(PackageVersion)-$(VersionSuffix)" Condition="'$(VersionSuffix)' != ''" />
     </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\JanD.Lib\JanD.Lib.csproj" />
+    </ItemGroup>
 </Project>

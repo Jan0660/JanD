@@ -1,4 +1,6 @@
-﻿using System;
+﻿global using JanD.Lib;
+global using JanD.Lib.Objects;
+using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -10,7 +12,6 @@ namespace JanD
 {
     public static class Program
     {
-        public const string DefaultPipeName = "jand";
         public static string PipeName;
         public const string Version = ThisAssembly.Constants.Version;
 
@@ -24,7 +25,7 @@ namespace JanD
 
         static async Task Main(string[] args)
         {
-            PipeName = Environment.GetEnvironmentVariable("JAND_PIPE") ?? DefaultPipeName;
+            PipeName = Environment.GetEnvironmentVariable("JAND_PIPE") ?? IpcClient.DefaultPipeName;
             var home = Environment.GetEnvironmentVariable("JAND_HOME");
             if (home != null)
             {

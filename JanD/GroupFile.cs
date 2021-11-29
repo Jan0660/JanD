@@ -5,7 +5,7 @@ namespace JanD
         public GroupFileProcess[] Processes { get; set; }
     }
 
-    public class GroupFileProcess : Daemon.JanDNewProcess
+    public class GroupFileProcess : JanDNewProcess
     {
         public bool Watch { get; set; }
         public bool AutoRestart { get; set; } = true;
