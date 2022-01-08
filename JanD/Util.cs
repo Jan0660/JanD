@@ -53,7 +53,7 @@ namespace JanD
             Console.Write("{0,-6}", "R|E|A");
             Console.Write(indexFormatString, "Id");
             Console.Write(nameFormatString, "Name");
-            Console.Write("{0,-5}", "?");
+            Console.Write("{0,-5}", "\u21ba");
             Console.Write("{0,-10}", "PID");
             Console.Write("{0,-7}", "Mem");
             Console.Write("{0,-7}", "Uptime");

@@ -51,7 +51,20 @@ namespace JanD
                 .WithParsedAsync(async obj =>
                 {
                     if (obj is ICommand command)
-                        await command.Run();
+                    {
+                        try
+                        {
+                            await command.Run();
+                        }
+                        catch (JanDClientException e)
+                        {
+                            Console.WriteLine("Daemon error: " + e.Message switch
+                            {
+                                "process-already-exists" => "Process already exists.",
+                                _ => e.Message,
+                            });
+                        }
+                    }
                     else
                         Console.WriteLine("error");
                 });

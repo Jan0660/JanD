@@ -2,6 +2,7 @@
 using System.IO.Pipes;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using JanD.Lib.Objects;
 
@@ -10,61 +11,50 @@ namespace JanD.Lib
     public class IpcClient
     {
         public const string DefaultPipeName = "jand";
-        public NamedPipeClientStream Stream;
+        public readonly NamedPipeClientStream Stream;
+        private static readonly JsonSerializerOptions? JsonSerializerOptions = new()
+        {
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        };
         public const int BufferSize = 200_000;
 
+        
+        /// <exception cref="TimeoutException"><paramref name="timeout"/> has been exceeded.</exception>
         public IpcClient(string pipeName = DefaultPipeName, int timeout = 3000)
         {
             Stream = new(".", pipeName, PipeDirection.InOut);
-            try
-            {
-                Stream.Connect(timeout);
-            }
-            catch (TimeoutException)
-            {
-                Console.WriteLine($"Could not connect to pipe {pipeName} within {timeout} millisecond timeout.");
-                Environment.Exit(1);
-            }
+            Stream.Connect(timeout);
         }
 
-        public void SendString(string type, string data)
+        public void SendString(string type, string? data = null)
         {
             Stream.Write(JsonSerializer.SerializeToUtf8Bytes(new IpcPacket
             {
                 Type = type,
                 Data = data
-            }));
+            }, JsonSerializerOptions));
         }
 
-        public string RequestString(string type, string data)
+        public string RequestString(string type, string? data = null)
         {
             SendString(type, data);
             return ReadString();
         }
 
-        public T RequestJson<T>(string type, string data)
+        /// <exception cref="JanDClientException">An exception has occured during deserialization, e.g. an error from the daemon.</exception>
+        public T RequestJson<T>(string type, string? data = null)
         {
             SendString(type, data);
             Span<byte> bytes = stackalloc byte[BufferSize];
             var count = Stream.Read(bytes);
             try
             {
-                return JsonSerializer.Deserialize<T>(bytes[..count]);
+                return JsonSerializer.Deserialize<T>(bytes[..count])!;
             }
             catch
             {
-                // todo: throw exception
-                Console.WriteLine(Encoding.UTF8.GetString(bytes[..count]));
-                return default;
+                throw new JanDClientException(Encoding.UTF8.GetString(bytes[..count]));
             }
-        }
-
-        public DaemonStatus GetStatus()
-        {
-            SendString("status", "");
-            Span<byte> bytes = stackalloc byte[BufferSize];
-            var count = Stream.Read(bytes);
-            return JsonSerializer.Deserialize<DaemonStatus>(bytes[..count])!;
         }
 
         public string ReadString()
@@ -73,9 +63,6 @@ namespace JanD.Lib
             var count = Stream.Read(bytes);
             return Encoding.UTF8.GetString(bytes[..count]);
         }
-
-        public void Write(string str)
-            => SendString("write", str);
 
         public void DoRequests(Span<string> processes, string type)
         {
@@ -89,6 +76,7 @@ namespace JanD.Lib
             }
         }
 
+        // todo: null-safe usages, change return to string?
         public string GetProcessName(string arg)
             => GetProcessNames(new[] { arg }).FirstOrDefault();
 

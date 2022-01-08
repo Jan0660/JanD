@@ -249,7 +249,7 @@ namespace JanD
                     var val1 = packet.Data[..packet.Data.IndexOf(':')];
                     var val2 = packet.Data[(packet.Data.IndexOf(':') + 1)..];
                     if (Processes.Any(p => p.Name == packet.Data.AsSpan()[(packet.Data.IndexOf(':') + 1)..]))
-                        throw new DaemonException("already-exists");
+                        throw new DaemonException("process-already-exists");
                     if (!ProcessNameValidationRegex.IsMatch(val2))
                         throw new DaemonException("Process name doesn't pass verification regex.");
 
@@ -342,7 +342,7 @@ namespace JanD
                 {
                     var def = JsonSerializer.Deserialize<JanDNewProcess>(packet.Data);
                     if (Processes.Any(p => p.Name == def!.Name))
-                        throw new DaemonException("already-exists");
+                        throw new DaemonException("process-already-exists");
 
                     if (!ProcessNameValidationRegex.IsMatch(def!.Name))
                         throw new DaemonException("Process name doesn't pass verification regex.");
@@ -445,6 +445,21 @@ namespace JanD
                 case "subscribe-errlog-event":
                 {
                     connection.ErrLogSubs.Add(packet.Data);
+                    pipeServer.Write("done");
+                    break;
+                }
+                // todo: don't separate stdout and stderr at all
+                case "subscribe-log-event":
+                {
+                    connection.OutLogSubs.Add(packet.Data);
+                    connection.ErrLogSubs.Add(packet.Data);
+                    pipeServer.Write("done");
+                    break;
+                }
+                case "unsubscribe-log-event":
+                {
+                    connection.OutLogSubs.Remove(packet.Data);
+                    connection.ErrLogSubs.Remove(packet.Data);
                     pipeServer.Write("done");
                     break;
                 }

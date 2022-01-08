@@ -74,12 +74,11 @@ namespace JanD
                     client.DoRequests(client.GetProcessNames(new[] { Name }), "start-process");
                 else
                 {
-                    var str = client.RequestString("new-process",
-                        JsonSerializer.Serialize(new JanDNewProcess(Name,
-                            Command.ToFullPath(), Arguments?.ToArray() ?? Array.Empty<string>(),
-                            Directory.GetCurrentDirectory())));
+                    var str = client.NewProcess(new JanDNewProcess(Name,
+                        Command.ToFullPath(), Arguments?.ToArray() ?? Array.Empty<string>(),
+                        Directory.GetCurrentDirectory()));
                     Console.WriteLine(str);
-                    str = client.RequestString("start-process", Name);
+                    str = client.StartProcess(Name);
                     Console.WriteLine(str);
                 }
 
@@ -162,7 +161,7 @@ namespace JanD
         [Verb("info", aliases: new[]
         {
             "i"
-        }, HelpText = "Get JanD information of information about a process.")]
+        }, HelpText = "Get JanD information or information about a process.")]
         public class InfoCommand : ICommand
         {
             [Value(0, MetaName = "Processes$", Default = null)]
@@ -179,7 +178,7 @@ namespace JanD
                     var client = NewClient();
                     foreach (var process in client.GetProcessNames(Processes.ToArray()))
                     {
-                        var proc = client.RequestJson<JanDRuntimeProcess>("get-process-info", process);
+                        var proc = client.GetProcessInfo(process);
 
                         Console.WriteLine(proc!.Name);
                         Info("Filename", proc.Filename);
@@ -218,10 +217,9 @@ namespace JanD
             {
                 Arguments = Arguments.FixArguments();
                 var client = NewClient();
-                var str = client.RequestString("new-process",
-                    JsonSerializer.Serialize(new JanDNewProcess(Name,
-                        Command.ToFullPath(), Arguments?.ToArray() ?? Array.Empty<string>(),
-                        Directory.GetCurrentDirectory())));
+                var str = client.NewProcess(new JanDNewProcess(Name,
+                    Command.ToFullPath(), Arguments?.ToArray() ?? Array.Empty<string>(),
+                    Directory.GetCurrentDirectory()));
                 Console.WriteLine(str);
                 Util.DoProcessListIfEnabled(client);
             }
@@ -244,8 +242,7 @@ namespace JanD
             public async Task Run()
             {
                 var client = NewClient();
-                var str = client.RequestString("save-config", "");
-                Console.WriteLine(str);
+                Console.WriteLine(client.SaveConfig());
             }
         }
 
@@ -293,13 +290,12 @@ namespace JanD
                 var client = NewClient();
                 if (Process == null)
                 {
-                    // full logs
-                    client.RequestString("subscribe-events", "255");
-                    var processes = client.RequestJson<JanDRuntimeProcess[]>("get-processes", "");
+                    // all logs
+                    client.SubscribeEvents("255");
+                    var processes = client.GetProcesses();
                     foreach (var proc in processes)
                     {
-                        client.RequestString("subscribe-outlog-event", proc.Name);
-                        client.RequestString("subscribe-errlog-event", proc.Name);
+                        client.SubscribeLogEvent(proc.Name);
                     }
 
                     client.ListenEvents(ev =>
@@ -322,9 +318,9 @@ namespace JanD
                         }
 
                         if (ev.Event == "procren")
-                            client.RequestString("subscribe-outlog-event", ev.Value);
+                            client.SubscribeLogEvent(ev.Value);
                         if (ev.Event == "procadd")
-                            client.RequestString("subscribe-outlog-event", ev.Value);
+                            client.SubscribeLogEvent(ev.Value);
                     });
                 }
 
@@ -333,7 +329,7 @@ namespace JanD
                     | Environment.GetEnvironmentVariable("JAND_AUTOFLUSH") == "1")
                 {
                     Console.WriteLine("Flushing logs...");
-                    Console.WriteLine(client.RequestString("flush-all-logs", ""));
+                    Console.WriteLine(client.FlushAllLogs());
                 }
 
                 var status = client.GetStatus();
@@ -364,11 +360,11 @@ namespace JanD
                     TailLog("err");
                 Console.WriteLine();
 
-                client.RequestString("subscribe-events", ((int)events).ToString());
+                client.SubscribeEvents(((int)events).ToString());
                 if (events.HasFlag(DaemonEvents.OutLog))
-                    client.RequestString("subscribe-outlog-event", Process);
+                    client.SubscribeOutLogEvent(Process);
                 if (events.HasFlag(DaemonEvents.ErrLog))
-                    client.RequestString("subscribe-errlog-event", Process);
+                    client.SubscribeErrLogEvent(Process);
                 client.ListenEvents(ev => Console.Write(ev!.Value));
             }
         }
@@ -500,7 +496,7 @@ namespace JanD
             public async Task Run()
             {
                 var client = NewClient();
-                client.RequestString("subscribe-events", "255");
+                client.SubscribeEvents("255");
                 byte[] bytes = new byte[100_000];
                 while (true)
                 {
@@ -517,7 +513,7 @@ namespace JanD
             public async Task Run()
             {
                 var client = NewClient();
-                Console.WriteLine(client.RequestString("flush-all-logs", ""));
+                Console.WriteLine(client.FlushAllLogs());
             }
         }
 
@@ -533,8 +529,7 @@ namespace JanD
             public async Task Run()
             {
                 var client = NewClient();
-                Console.WriteLine(
-                    client.RequestString("rename-process", client.GetProcessName(OldName) + ':' + NewName));
+                Console.WriteLine(client.RenameProcess(client.GetProcessName(OldName), NewName));
                 Util.DoProcessListIfEnabled(client);
             }
         }
@@ -570,7 +565,7 @@ namespace JanD
                 var client = NewClient();
                 if (Name != null && Value != null)
                 {
-                    var res = client.RequestString("set-config", Name + ":" + Value);
+                    var res = client.SetConfig(Name, Value);
                     if (res == "done")
                     {
                         Console.ForegroundColor = ConsoleColor.Cyan;
@@ -654,8 +649,7 @@ namespace JanD
                         : proc.Filename;
                     proc.Name = String.Format(proc.Name, GroupName);
                     Console.Write("new " + proc.Name + ": ");
-                    Console.WriteLine(client.RequestString("new-process",
-                        JsonSerializer.Serialize(proc)));
+                    Console.WriteLine(client.NewProcess(proc));
                     var defaultValues = new JanDProcess();
                     foreach (var prop in new[] { "watch", "autoRestart", "enabled" })
                     {
@@ -666,13 +660,12 @@ namespace JanD
                             .GetValue(defaultValues)!.ToString();
                         if (val != defVal)
                         {
-                            client.RequestString("set-process-property", JsonSerializer.Serialize(
-                                new SetPropertyIpcPacket
-                                {
-                                    Process = proc.Name,
-                                    Property = prop,
-                                    Data = val!
-                                }));
+                            client.SetProcessProperty(new SetPropertyIpcPacket
+                            {
+                                Process = proc.Name,
+                                Property = prop,
+                                Data = val!
+                            });
                         }
                     }
 
@@ -715,13 +708,12 @@ namespace JanD
             public async Task Run()
             {
                 var client = NewClient();
-                Console.WriteLine(client.RequestString("set-process-property", JsonSerializer.Serialize(
-                    new SetPropertyIpcPacket
+                Console.WriteLine(client.SetProcessProperty(new SetPropertyIpcPacket
                     {
                         Process = client.GetProcessName(Process),
                         Property = Property,
                         Data = Data
-                    })));
+                    }));
             }
         }
 
@@ -731,7 +723,7 @@ namespace JanD
             public async Task Run()
             {
                 var client = NewClient();
-                var processes = client.RequestJson<JanDRuntimeProcess[]>("get-processes", "");
+                var processes = client.GetProcesses();
                 for (var i = 0; i < processes.Length; i++)
                 {
                     Console.Write(processes[i].Name);
@@ -755,9 +747,8 @@ namespace JanD
                 _ = Task.Run(() =>
                 {
                     var logWatcher = NewClient();
-                    logWatcher.RequestString("subscribe-events", "255");
-                    logWatcher.RequestString("subscribe-outlog-event", name);
-                    logWatcher.RequestString("subscribe-errlog-event", name);
+                    logWatcher.SubscribeEvents("255");
+                    logWatcher.SubscribeLogEvent(name);
                     logWatcher.ListenEvents(ev =>
                     {
                         if (ev.Event == "outlog")
