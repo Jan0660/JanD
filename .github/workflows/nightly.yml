@@ -15,7 +15,7 @@ jobs:
       - name: Install Ubuntu dependencies
         run: sudo apt-get install -y clang zlib1g-dev libkrb5-dev
       - name: Restore JanD
-        run: dotnet restore JanD
+        run: dotnet restore JanD -r linux-x64
       - name: Publish JanD
         run: dotnet publish JanD -c release -r linux-x64 -o ./artifacts/JanD -p:VersionSuffix=nightly-linux-$(git rev-parse --short HEAD)
       - name: Strippping
@@ -39,7 +39,7 @@ jobs:
         with:
           xcode-version: latest-stable
       - name: Restore JanD
-        run: dotnet restore JanD
+        run: dotnet restore JanD -r osx-x64
       - name: Publish JanD
         run: dotnet publish JanD -c release -r osx-x64 -o ./artifacts/JanD -p:VersionSuffix=nightly-osx-$(git rev-parse --short HEAD)
       - name: Strippping
@@ -60,7 +60,7 @@ jobs:
           dotnet-version: 7.0.x
           include-prerelease: true
       - name: Restore JanD
-        run: dotnet restore JanD
+        run: dotnet restore JanD -r win-x64
       - name: Publish JanD
         run: dotnet publish JanD -c release -r win-x64 -o ./artifacts/JanD -p:VersionSuffix=nightly-windows-$(git rev-parse --short HEAD)
       - name: Upload JanD
