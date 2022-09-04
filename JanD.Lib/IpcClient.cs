@@ -2,7 +2,6 @@
 using System.IO.Pipes;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using JanD.Lib.Objects;
 
@@ -12,10 +11,6 @@ namespace JanD.Lib
     {
         public const string DefaultPipeName = "jand";
         public readonly NamedPipeClientStream Stream;
-        private static readonly JsonSerializerOptions? JsonSerializerOptions = new()
-        {
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        };
         public const int BufferSize = 200_000;
 
         
@@ -32,7 +27,7 @@ namespace JanD.Lib
             {
                 Type = type,
                 Data = data
-            }, JsonSerializerOptions));
+            }, typeof(IpcPacket), MyJsonContext.Default));
         }
 
         public string RequestString(string type, string? data = null)
@@ -49,7 +44,7 @@ namespace JanD.Lib
             var count = Stream.Read(bytes);
             try
             {
-                return JsonSerializer.Deserialize<T>(bytes[..count])!;
+                return (T)JsonSerializer.Deserialize(bytes[..count], typeof(T), MyJsonContext.Default)!;
             }
             catch
             {
@@ -135,7 +130,7 @@ namespace JanD.Lib
                     bytesCount++;
                 }
 
-                var ev = JsonSerializer.Deserialize<DaemonClientEvent>(bytes[..bytesCount]);
+                var ev = (DaemonClientEvent)JsonSerializer.Deserialize(bytes[..bytesCount], typeof(DaemonClientEvent), MyJsonContext.Default);
                 action(ev);
             }
         }

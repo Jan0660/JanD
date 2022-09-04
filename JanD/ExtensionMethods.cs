@@ -13,16 +13,16 @@ namespace JanD
     {
         public static void WriteProcessInfo(this Utf8JsonWriter j, JanDProcess proc)
         {
-            j.WriteString("Name", proc.Name);
-            j.WriteString("Filename", proc.Filename);
+            j.WriteString("Name", proc.Data.Name);
+            j.WriteString("Filename", proc.Data.Filename);
             j.WritePropertyName("Arguments");
             j.WriteStartArray();
-            foreach (var argument in proc.Arguments)
+            foreach (var argument in proc.Data.Arguments)
             {
                 j.WriteStringValue(argument.AsSpan());
             }
             j.WriteEndArray();
-            j.WriteString("WorkingDirectory", proc.WorkingDirectory);
+            j.WriteString("WorkingDirectory", proc.Data.WorkingDirectory);
             try
             {
                 j.WriteNumber("ProcessId", proc.Process?.Id ?? -1);
@@ -35,10 +35,10 @@ namespace JanD
             j.WriteBoolean("Stopped", proc.Stopped);
             j.WriteNumber("ExitCode", proc.ExitCode);
             j.WriteNumber("RestartCount", proc.RestartCount);
-            j.WriteBoolean("Enabled", proc.Enabled);
-            j.WriteBoolean("AutoRestart", proc.AutoRestart);
+            j.WriteBoolean("Enabled", proc.Data.Enabled);
+            j.WriteBoolean("AutoRestart", proc.Data.AutoRestart);
             j.WriteBoolean("Running", proc.Process != null);
-            j.WriteBoolean("Watch", proc.Watch);
+            j.WriteBoolean("Watch", proc.Data.Watch);
             j.WriteNumber("SafeIndex", proc.SafeIndex);
         }
 

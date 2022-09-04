@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace JanD
 {
     public class GroupFile
@@ -16,5 +18,11 @@ namespace JanD
             workingDirectory)
         {
         }
+    }
+    
+    [JsonSourceGenerationOptions(WriteIndented = true, PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
+    [JsonSerializable(typeof(GroupFile))]
+    public partial class GroupFileJsonContext : JsonSerializerContext
+    {
     }
 }

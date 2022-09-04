@@ -47,7 +47,8 @@ namespace JanD
                     config.AutoVersion = true;
                     config.HelpWriter = null;
                 }).ParseArguments(args,
-                    typeof(Commands).GetNestedTypes())
+                    typeof(Commands).GetNestedTypes()
+                    )
                 .WithParsedAsync(async obj =>
                 {
                     if (obj is ICommand command)

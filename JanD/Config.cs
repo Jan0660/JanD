@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text.Json.Serialization;
 
 #pragma warning disable 4014
 
@@ -6,7 +7,7 @@ namespace JanD
 {
     public class Config
     {
-        public JanDProcess[] Processes { get; set; }
+        public JanDProcessData[] Processes { get; set; }
         // When adding config options remember to add the Description attribute
         // and check if it's type is covered in the `SetValueString` extension method, `config` command
         // and add it to the `get-config` daemon method
@@ -36,5 +37,11 @@ namespace JanD
     {
         public string Value { get; set; }
         public DescriptionAttribute(string value) => Value = value;
+    }
+    
+    [JsonSourceGenerationOptions(WriteIndented = true)]
+    [JsonSerializable(typeof(Config))]
+    public partial class ConfigJsonContext : JsonSerializerContext
+    {
     }
 }

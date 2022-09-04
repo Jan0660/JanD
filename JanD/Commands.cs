@@ -589,7 +589,8 @@ namespace JanD
                 }
                 else if (Name != null && Value == null)
                 {
-                    var config = client.RequestJson<Config>("get-config", "");
+                    var config = (Config)JsonSerializer.Deserialize(client.RequestString("get-config"), typeof(Config),
+                        ConfigJsonContext.Default);
                     var type = config.GetType();
                     var property = type.GetPropertyCaseInsensitive(Name);
                     if (property != null)
@@ -608,7 +609,8 @@ namespace JanD
                 }
                 else
                 {
-                    var config = client.RequestJson<Config>("get-config", "");
+                    var config = (Config)JsonSerializer.Deserialize(client.RequestString("get-config"), typeof(Config),
+                        ConfigJsonContext.Default);
                     foreach (var property in typeof(Config).GetProperties(BindingFlags.Instance | BindingFlags.Public))
                     {
                         if (property.PropertyType == typeof(bool))
@@ -633,12 +635,8 @@ namespace JanD
 
             public async Task Run()
             {
-                var groupFile = JsonSerializer.Deserialize<GroupFile>(File.ReadAllText("./jand-group.json"),
-                    new JsonSerializerOptions()
-                    {
-                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                        ReadCommentHandling = JsonCommentHandling.Skip
-                    });
+                var groupFile = (GroupFile)JsonSerializer.Deserialize(File.ReadAllText("./jand-group.json"),
+                    typeof(GroupFile), GroupFileJsonContext.Default);
                 var client = NewClient();
                 var list = new List<String>();
                 foreach (var proc in groupFile!.Processes)
@@ -709,11 +707,11 @@ namespace JanD
             {
                 var client = NewClient();
                 Console.WriteLine(client.SetProcessProperty(new SetPropertyIpcPacket
-                    {
-                        Process = client.GetProcessName(Process),
-                        Property = Property,
-                        Data = Data
-                    }));
+                {
+                    Process = client.GetProcessName(Process),
+                    Property = Property,
+                    Data = Data
+                }));
             }
         }
 

@@ -1,14 +1,6 @@
----
-sidebar_position: 2
-title: README
----
-
 # JanD
 
 [![chat on discord](https://img.shields.io/discord/749601186155462748?logo=discord)](https://discord.gg/zBbV56e)
-[![TeamCity build status](<https://ci.nekos.cloud/app/rest/builds/aggregated/strob:(branch:(buildType:(id:JanD_Build),policy:active_history_and_active_vcs_branches),locator:(buildType:(id:JanD_Build)))/statusIcon>)](https://ci.nekos.cloud/buildConfiguration/JanD_Build/lastFinished?buildTab=artifacts&guest=1)
-[![TeamCity linux-x64 build status](<https://ci.nekos.cloud/app/rest/builds/aggregated/strob:(branch:(buildType:(id:JanD_Linux),policy:active_history_and_active_vcs_branches),locator:(buildType:(id:JanD_Linux)))/statusIcon>)](https://ci.nekos.cloud/buildConfiguration/JanD_Linux/lastFinished?buildTab=artifacts&guest=1)
-[![TeamCity win-x64 build status](<https://ci.nekos.cloud/app/rest/builds/aggregated/strob:(branch:(buildType:(id:JanD_Windows),policy:active_history_and_active_vcs_branches),locator:(buildType:(id:JanD_Windows)))/statusIcon>)](https://ci.nekos.cloud/buildConfiguration/JanD_Windows/lastFinished?buildTab=artifacts&guest=1)
 
 A process manager made in C# with NativeAOT in mind.
 

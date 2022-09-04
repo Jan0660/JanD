@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.IO.Pipes;
 using System.Linq;
@@ -25,11 +26,6 @@ namespace JanD
         public static readonly List<DaemonConnection> Connections = new();
         public static int LastSafeIndex = -1;
 
-        public static JsonSerializerOptions PacketDeserializationOptions { get; } = new()
-        {
-            PropertyNameCaseInsensitive = true
-        };
-
         public static readonly Regex ProcessNameValidationRegex =
             new("^(?!(-|[0-9]|\\/))([A-z]|[0-9]|_|-|\\.|@|#|\\/)+$");
 
@@ -37,7 +33,7 @@ namespace JanD
 
         public static JanDProcess GetProcess(string name, bool throwOnNotFound = true)
         {
-            var proc = Processes.FirstOrDefault(p => p.Name == name);
+            var proc = Processes.FirstOrDefault(p => p.Data.Name == name);
             if (proc == null)
             {
                 if (throwOnNotFound)
@@ -67,7 +63,7 @@ namespace JanD
             try
             {
                 var json = File.ReadAllText("./config.json");
-                Config = JsonSerializer.Deserialize<Config>(json);
+                Config = (Config)JsonSerializer.Deserialize(json, typeof(Config), ConfigJsonContext.Default);
                 // redundant check for past versions since this is the first migration ever
                 if (Config!.SavedVersion == "0.6.0" || Config.SavedVersion == "0.5.2" ||
                     Config.SavedVersion == "0.5.1" || Config.SavedVersion == "0.5.0")
@@ -94,7 +90,7 @@ namespace JanD
             {
                 Config = new()
                 {
-                    Processes = Array.Empty<JanDProcess>()
+                    Processes = Array.Empty<JanDProcessData>()
                 };
             }
 
@@ -108,17 +104,24 @@ namespace JanD
             DaemonLog($"Starting with {Config.Processes.Length} processes.");
             if (!Directory.Exists("./logs"))
                 Directory.CreateDirectory("./logs");
-            foreach (var proc in Config.Processes)
+
+            Processes = new();
+            foreach (var processData in Config.Processes)
             {
+                var proc = new JanDProcess()
+                {
+                    Data = processData
+                };
+                Processes.Add(proc);
                 proc.SafeIndex = ++LastSafeIndex;
                 try
                 {
-                    if (proc.Enabled)
+                    if (proc.Data.Enabled)
                         proc.Start();
                 }
                 catch (Exception exc)
                 {
-                    Console.WriteLine($"Starting {proc.Name} failed: {exc.Message}");
+                    Console.WriteLine($"Starting {proc.Data.Name} failed: {exc.Message}");
                 }
             }
 
@@ -197,7 +200,6 @@ namespace JanD
                     null);
             }
 
-            Processes = Config.Processes.ToList();
             NewPipeServer();
             try
             {
@@ -216,7 +218,7 @@ namespace JanD
         {
             if (Config.LogIpc)
                 DaemonLog("Received IPC: " + Encoding.UTF8.GetString(bytes.AsSpan()[..count]));
-            var packet = JsonSerializer.Deserialize<IpcPacket>(bytes.AsSpan()[..count], PacketDeserializationOptions);
+            var packet = (IpcPacket)JsonSerializer.Deserialize(bytes.AsSpan()[..count], typeof(IpcPacket), MyJsonContext.Default);
             switch (packet!.Type)
             {
                 case "ping":
@@ -248,13 +250,13 @@ namespace JanD
                 {
                     var val1 = packet.Data[..packet.Data.IndexOf(':')];
                     var val2 = packet.Data[(packet.Data.IndexOf(':') + 1)..];
-                    if (Processes.Any(p => p.Name == packet.Data.AsSpan()[(packet.Data.IndexOf(':') + 1)..]))
+                    if (Processes.Any(p => p.Data.Name == packet.Data.AsSpan()[(packet.Data.IndexOf(':') + 1)..]))
                         throw new DaemonException("process-already-exists");
                     if (!ProcessNameValidationRegex.IsMatch(val2))
                         throw new DaemonException("Process name doesn't pass verification regex.");
 
                     var proc = GetProcess(val1);
-                    proc.Name = val2;
+                    proc.Data.Name = val2;
                     NotSaved = true;
                     pipeServer.Write("done");
                     ProcessEventAsync(DaemonEvents.ProcessRenamed, val1, val2);
@@ -269,22 +271,22 @@ namespace JanD
                 {
                     var separatorIndex = packet.Data.IndexOf(':');
                     var proc = Processes.FirstOrDefault(p =>
-                        p.Name == packet.Data[..separatorIndex]);
+                        p.Data.Name == packet.Data[..separatorIndex]);
                     if (proc == null)
                     {
                         pipeServer.Write("ERR:invalid-process");
                         return;
                     }
 
-                    proc.Enabled = Boolean.Parse(packet.Data[(separatorIndex + 1)..]);
-                    pipeServer.Write(proc.Enabled.ToString());
+                    proc.Data.Enabled = Boolean.Parse(packet.Data[(separatorIndex + 1)..]);
+                    pipeServer.Write(proc.Data.Enabled.ToString());
                     NotSaved = true;
-                    ProcessPropertyUpdated(proc.Name, "Enabled", packet.Data[(separatorIndex + 1)..]);
+                    ProcessPropertyUpdated(proc.Data.Name, "Enabled", packet.Data[(separatorIndex + 1)..]);
                     break;
                 }
                 case "set-process-property":
                 {
-                    var req = JsonSerializer.Deserialize<SetPropertyIpcPacket>(packet.Data);
+                    var req = Util.DeserializeJson<SetPropertyIpcPacket>(packet.Data);
                     var process = GetProcess(req!.Process);
                     var property = typeof(JanDProcess).GetPropertyCaseInsensitive(req.Property);
                     if (property == null)
@@ -340,8 +342,8 @@ namespace JanD
                 }
                 case "new-process":
                 {
-                    var def = JsonSerializer.Deserialize<JanDNewProcess>(packet.Data);
-                    if (Processes.Any(p => p.Name == def!.Name))
+                    var def = Util.DeserializeJson<JanDNewProcess>(packet.Data);
+                    if (Processes.Any(p => p.Data.Name == def!.Name))
                         throw new DaemonException("process-already-exists");
 
                     if (!ProcessNameValidationRegex.IsMatch(def!.Name))
@@ -349,16 +351,19 @@ namespace JanD
 
                     JanDProcess proc = new()
                     {
-                        Name = def.Name,
-                        Filename = def.Filename,
-                        Arguments = def.Arguments,
-                        WorkingDirectory = def.WorkingDirectory,
+                        Data = new()
+                        {
+                            Name = def.Name,
+                            Filename = def.Filename,
+                            Arguments = def.Arguments,
+                            WorkingDirectory = def.WorkingDirectory,
+                        },
                         SafeIndex = ++LastSafeIndex
                     };
                     Processes.Add(proc);
                     NotSaved = true;
                     pipeServer.Write("added");
-                    ProcessEventAsync(DaemonEvents.ProcessAdded, proc.Name);
+                    ProcessEventAsync(DaemonEvents.ProcessAdded, proc.Data.Name);
                     break;
                 }
                 case "start-process":
@@ -379,12 +384,14 @@ namespace JanD
                 }
                 case "save-config":
                 {
-                    Config.Processes = Processes.ToArray();
-                    Config.SavedVersion = Program.Version;
-                    var json = JsonSerializer.Serialize(Config, new JsonSerializerOptions
+                    var processes = new JanDProcessData[Processes.Count];
+                    for (var i = 0; i < Processes.Count; i++)
                     {
-                        WriteIndented = Config.FormatConfig
-                    });
+                        processes[i] = Processes[i].Data;
+                    }
+                    Config.Processes = processes;
+                    Config.SavedVersion = Program.Version;
+                    var json = JsonSerializer.Serialize(Config, typeof(Config), ConfigJsonContext.Default);
                     File.WriteAllText("./config.json", json);
                     NotSaved = false;
                     pipeServer.Write("done");
@@ -392,7 +399,14 @@ namespace JanD
                 }
                 case "get-process-list":
                 {
-                    pipeServer.Write(JsonSerializer.SerializeToUtf8Bytes(Processes.ToArray()));
+                    var writer = new Utf8JsonWriter(pipeServer);
+                    writer.WriteStartArray();
+                    foreach (var process in Processes)
+                    {
+                        JsonSerializer.Serialize(writer, process, typeof(JanDProcessData), MyJsonContext.Default);
+                    }
+                    writer.WriteEndArray();
+                    writer.Flush();
                     break;
                 }
                 case "get-processes":
@@ -419,7 +433,7 @@ namespace JanD
                     Processes.Remove(proc);
                     NotSaved = true;
                     pipeServer.Write("done");
-                    ProcessEventAsync(DaemonEvents.ProcessDeleted, proc.Name);
+                    ProcessEventAsync(DaemonEvents.ProcessDeleted, proc.Data.Name);
                     break;
                 }
                 case "subscribe-events":

@@ -11,26 +11,13 @@ namespace JanD
 {
     public class JanDProcess
     {
-        public string Name { get; set; }
-
-        /// <summary>
-        /// DEPRECATED. Use Filename and Arguments instead.
-        /// </summary>
-        [Obsolete]
-        public string Command { get; set; }
-
-        public string Filename { get; set; }
-        public string[] Arguments { get; set; }
-        public string WorkingDirectory { get; set; }
+        public JanDProcessData Data { get; set; }
         [JsonIgnore] public Process Process { get; set; }
-        public bool AutoRestart { get; set; } = true;
-        public bool Enabled { get; set; } = true;
-        public bool Watch { get; set; }
         [JsonIgnore] public int SafeIndex { get; set; }
 
         [JsonIgnore]
         public bool ShouldRestart =>
-            !Stopped && AutoRestart && Enabled && CurrentUnstableRestarts < Daemon.Config.MaxRestarts;
+            !Stopped && Data.AutoRestart && Data.Enabled && CurrentUnstableRestarts < Daemon.Config.MaxRestarts;
 
         [JsonIgnore] public bool Stopped { get; set; }
         [JsonIgnore] public int ExitCode { get; set; }
@@ -45,18 +32,18 @@ namespace JanD
             if (Process != null)
                 return;
             Console.WriteLine(
-                Ansi.ForegroundColor($"Starting: Name: {Name}; Filename: {Filename}", 0, 247, 247));
-            OutWriter ??= new StreamWriter(Path.Combine("./logs/") + Name + "-out.log", true)
+                Ansi.ForegroundColor($"Starting: Name: {Data.Name}; Filename: {Data.Filename}", 0, 247, 247));
+            OutWriter ??= new StreamWriter(Path.Combine("./logs/") + Data.Name + "-out.log", true)
             {
                 AutoFlush = true
             };
-            ErrWriter ??= new StreamWriter(Path.Combine("./logs/") + Name + "-err.log", true)
+            ErrWriter ??= new StreamWriter(Path.Combine("./logs/") + Data.Name + "-err.log", true)
             {
                 AutoFlush = true
             };
-            if (Watch && FileSystemWatcher == null)
+            if (Data.Watch && FileSystemWatcher == null)
             {
-                FileSystemWatcher = new FileSystemWatcher(WorkingDirectory)
+                FileSystemWatcher = new FileSystemWatcher(Data.WorkingDirectory)
                 {
                     EnableRaisingEvents = true,
                     IncludeSubdirectories = true,
@@ -65,7 +52,7 @@ namespace JanD
                 };
                 FileSystemWatcher.Changed += (_, args) =>
                 {
-                    Daemon.DaemonLog($"File changed for {Name}: {args.Name}, restarting in 500ms");
+                    Daemon.DaemonLog($"File changed for {Data.Name}: {args.Name}, restarting in 500ms");
                     // prevent race condition/multiple files changed at once causing multiple restarts
                     bool wasHandled = false;
                     Task.Delay(500).ContinueWith(_ =>
@@ -82,22 +69,22 @@ namespace JanD
             var process = new Process();
             var startInfo = new ProcessStartInfo
             {
-                FileName = Filename,
-                Arguments = string.Join(' ', Arguments),
+                FileName = Data.Filename,
+                Arguments = string.Join(' ', Data.Arguments),
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 RedirectStandardInput = true,
                 UseShellExecute = false,
                 StandardErrorEncoding = Encoding.UTF8,
                 StandardOutputEncoding = Encoding.UTF8,
-                WorkingDirectory = WorkingDirectory ?? Directory.GetCurrentDirectory()
+                WorkingDirectory = Data.WorkingDirectory ?? Directory.GetCurrentDirectory()
             };
             process.StartInfo = startInfo;
             process.EnableRaisingEvents = true;
             process.Exited += (_, _) =>
             {
                 Console.WriteLine(Ansi.ForegroundColor(
-                    $"Exited: {Name}; ExitCode: {process.ExitCode}; AutoRestart: {AutoRestart}; ShouldRestart: {ShouldRestart};",
+                    $"Exited: {Data.Name}; ExitCode: {process.ExitCode}; AutoRestart: {Data.AutoRestart}; ShouldRestart: {ShouldRestart};",
                     0, 247,
                     247));
                 if (process.ExitCode != 0 && !Stopped)
@@ -112,12 +99,12 @@ namespace JanD
                     }
                     catch
                     {
-                        Console.WriteLine($"{Name} failed to restart.");
+                        Console.WriteLine($"{Data.Name} failed to restart.");
                     }
                 }
 
 #pragma warning disable 4014
-                Daemon.ProcessEventAsync(DaemonEvents.ProcessStopped, Name);
+                Daemon.ProcessEventAsync(DaemonEvents.ProcessStopped, Data.Name);
 #pragma warning restore 4014
             };
 
@@ -125,7 +112,7 @@ namespace JanD
             {
                 if (eventArgs.Data == null)
                     return;
-                var str = Ansi.ForegroundColor($"{Name} {whichStd}| ", (byte)(whichStd == "err" ? 255 : 0),
+                var str = Ansi.ForegroundColor($"{Data.Name} {whichStd}| ", (byte)(whichStd == "err" ? 255 : 0),
                               (byte)(whichStd == "out" ? 255 : 0), 0) + eventArgs.Data +
                           '\n';
                 if (whichStd == "out")
@@ -139,12 +126,12 @@ namespace JanD
                     foreach (var con in Daemon.Connections.Where(c =>
                                  c.Events.HasFlag((whichStd == "out" ? DaemonEvents.OutLog : DaemonEvents.ErrLog))))
                     {
-                        if ((whichStd == "out" ? con.OutLogSubs.Contains(Name) : con.ErrLogSubs.Contains(Name)))
+                        if ((whichStd == "out" ? con.OutLogSubs.Contains(Data.Name) : con.ErrLogSubs.Contains(Data.Name)))
                         {
                             var json = new Utf8JsonWriter(con.Stream);
                             json.WriteStartObject();
                             json.WriteString("Event", whichStd + "log");
-                            json.WriteString("Process", Name);
+                            json.WriteString("Process", Data.Name);
                             json.WriteString("Value", str);
                             json.WriteEndObject();
                             json.Flush();
@@ -188,7 +175,7 @@ namespace JanD
             }
 
 #pragma warning disable 4014
-            Daemon.ProcessEventAsync(DaemonEvents.ProcessStarted, Name);
+            Daemon.ProcessEventAsync(DaemonEvents.ProcessStarted, Data.Name);
 #pragma warning restore 4014
         }
 

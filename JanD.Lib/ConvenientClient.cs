@@ -33,7 +33,7 @@ public static class ConvenientClient
     #region Process
 
     public static string NewProcess(this IpcClient client, JanDNewProcess process)
-        => client.Request("new-process", JsonSerializer.Serialize(process));
+        => client.Request("new-process", JsonSerializer.Serialize(process, typeof(JanDNewProcess), MyJsonContext.Default));
 
     public static string StartProcess(this IpcClient client, string name)
         => client.Request("start-process", name);
@@ -42,7 +42,7 @@ public static class ConvenientClient
         => client.Request("rename-process", $"{oldName}:{newName}");
 
     public static string SetProcessProperty(this IpcClient client, SetPropertyIpcPacket packet)
-        => client.Request("set-process-property", JsonSerializer.Serialize(packet));
+        => client.Request("set-process-property", JsonSerializer.Serialize(packet, typeof(SetPropertyIpcPacket), MyJsonContext.Default));
 
     #endregion
 

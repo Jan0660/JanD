@@ -35,7 +35,7 @@ namespace JanD
         {
             var json = client.RequestString("get-processes", "");
             var status = client.GetStatus();
-            var processes = JsonSerializer.Deserialize<JanDRuntimeProcess[]>(json);
+            var processes = (JanDRuntimeProcess[])JsonSerializer.Deserialize(json, typeof(JanDRuntimeProcess[]), MyJsonContext.Default);
 
             int maxNameLength = 0;
             int maxIndexLength = 0;
@@ -131,9 +131,9 @@ namespace JanD
             var att = property.GetCustomAttribute<DescriptionAttribute>();
             if (att != null)
             {
-                Console.ForegroundColor = ConsoleColor.DarkGray;
-                Console.WriteLine("?? " + att.Value);
-                Console.ResetColor();
+                // Console.ForegroundColor = ConsoleColor.DarkGray;
+                Console.WriteLine($"  {att.Value}");
+                // Console.ResetColor();
             }
         }
 
@@ -236,5 +236,8 @@ namespace JanD
                 return await ProcessOutputAsync("which", arg);
             return Path.GetFullPath(arg);
         }
+
+        public static T DeserializeJson<T>(ReadOnlySpan<char> input)
+            => (T)JsonSerializer.Deserialize(input, typeof(T), MyJsonContext.Default);
     }
 }
