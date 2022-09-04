@@ -26,30 +26,30 @@ jobs:
           name: jand-linux
           path: ./artifacts/JanD/JanD
           if-no-files-found: error
-  osx:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Setup .NET Core SDK
-        uses: actions/setup-dotnet@v2
-        with:
-          dotnet-version: 7.0.x
-          include-prerelease: true
-      - uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: latest-stable
-      - name: Restore JanD
-        run: dotnet restore JanD -r osx-x64
-      - name: Publish JanD
-        run: dotnet publish JanD -c release -r osx-x64 -o ./artifacts/JanD -p:VersionSuffix=nightly-osx-$(git rev-parse --short HEAD)
-      - name: Strippping
-        run: strip ./artifacts/JanD/JanD
-      - name: Upload JanD
-        uses: actions/upload-artifact@v2
-        with:
-          name: jand-osx
-          path: ./artifacts/JanD/JanD
-          if-no-files-found: error
+  # osx:
+  #   runs-on: macos-latest
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Setup .NET Core SDK
+  #       uses: actions/setup-dotnet@v2
+  #       with:
+  #         dotnet-version: 7.0.x
+  #         include-prerelease: true
+  #     - uses: maxim-lobanov/setup-xcode@v1
+  #       with:
+  #         xcode-version: latest-stable
+  #     - name: Restore JanD
+  #       run: dotnet restore JanD -r osx-x64
+  #     - name: Publish JanD
+  #       run: dotnet publish JanD -c release -r osx-x64 -o ./artifacts/JanD -p:VersionSuffix=nightly-osx-$(git rev-parse --short HEAD)
+  #     - name: Strippping
+  #       run: strip ./artifacts/JanD/JanD
+  #     - name: Upload JanD
+  #       uses: actions/upload-artifact@v2
+  #       with:
+  #         name: jand-osx
+  #         path: ./artifacts/JanD/JanD
+  #         if-no-files-found: error
   windows:
     runs-on: windows-latest
     steps:
