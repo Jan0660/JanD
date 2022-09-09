@@ -397,18 +397,6 @@ namespace JanD
                     pipeServer.Write("done");
                     break;
                 }
-                case "get-process-list":
-                {
-                    var writer = new Utf8JsonWriter(pipeServer);
-                    writer.WriteStartArray();
-                    foreach (var process in Processes)
-                    {
-                        JsonSerializer.Serialize(writer, process, typeof(JanDProcessData), MyJsonContext.Default);
-                    }
-                    writer.WriteEndArray();
-                    writer.Flush();
-                    break;
-                }
                 case "get-processes":
                 {
                     var writer = new Utf8JsonWriter(pipeServer);
