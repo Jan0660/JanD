@@ -3,7 +3,7 @@ name: nightly
 on: [push]
 
 jobs:
-  ubuntu:
+  ubuntu-aot:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -17,16 +17,38 @@ jobs:
       - name: Restore JanD
         run: dotnet restore JanD -r linux-x64
       - name: Publish JanD
-        run: dotnet publish JanD -c release -r linux-x64 -o ./artifacts/JanD -p:VersionSuffix=nightly-linux-$(git rev-parse --short HEAD)
+        run: dotnet publish JanD -c release -r linux-x64 -o ./artifacts/JanD -p:VersionSuffix=nightly-linux-x64-aot-$(git rev-parse --short HEAD)
       - name: Strippping
         run: strip ./artifacts/JanD/JanD
       - name: Upload JanD
         uses: actions/upload-artifact@v2
         with:
-          name: jand-linux
+          name: jand-linux-x64
           path: ./artifacts/JanD/JanD
           if-no-files-found: error
-  # osx:
+  contained:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rid: [linux-arm, linux-arm64, osx-x64]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup .NET Core SDK
+        uses: actions/setup-dotnet@v2
+        with:
+          dotnet-version: 7.0.x
+          include-prerelease: true
+      - name: Restore JanD
+        run: dotnet restore JanD -r ${{ matrix.rid }} -p:NoNativeAOTPublish=h
+      - name: Publish JanD
+        run: dotnet publish JanD -c release -r ${{ matrix.rid }} -o ./artifacts/JanD -p:VersionSuffix=nightly-${{ matrix.rid }}-contained-$(git rev-parse --short HEAD) -p:NoNativeAOTPublish=h --self-contained -p:PublishReadyToRun=true -p:PublishSingleFile=true
+      - name: Upload JanD
+        uses: actions/upload-artifact@v2
+        with:
+          name: jand-${{ matrix.rid }}-contained
+          path: ./artifacts/JanD/JanD
+          if-no-files-found: error
+  # osx-aot:
   #   runs-on: macos-latest
   #   steps:
   #     - uses: actions/checkout@v2
@@ -41,7 +63,7 @@ jobs:
   #     - name: Restore JanD
   #       run: dotnet restore JanD -r osx-x64
   #     - name: Publish JanD
-  #       run: dotnet publish JanD -c release -r osx-x64 -o ./artifacts/JanD -p:VersionSuffix=nightly-osx-$(git rev-parse --short HEAD)
+  #       run: dotnet publish JanD -c release -r osx-x64 -o ./artifacts/JanD -p:VersionSuffix=nightly-osx-x64-aot-$(git rev-parse --short HEAD)
   #     - name: Strippping
   #       run: strip ./artifacts/JanD/JanD
   #     - name: Upload JanD
@@ -50,7 +72,7 @@ jobs:
   #         name: jand-osx
   #         path: ./artifacts/JanD/JanD
   #         if-no-files-found: error
-  windows:
+  windows-aot:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v2
@@ -62,10 +84,10 @@ jobs:
       - name: Restore JanD
         run: dotnet restore JanD -r win-x64
       - name: Publish JanD
-        run: dotnet publish JanD -c release -r win-x64 -o ./artifacts/JanD -p:VersionSuffix=nightly-windows-$(git rev-parse --short HEAD)
+        run: dotnet publish JanD -c release -r win-x64 -o ./artifacts/JanD -p:VersionSuffix=nightly-windows-x64-aot-$(git rev-parse --short HEAD)
       - name: Upload JanD
         uses: actions/upload-artifact@v2
         with:
-          name: jand-windows.exe
+          name: jand-windows-x64.exe
           path: ./artifacts/JanD/JanD.exe
           if-no-files-found: error
