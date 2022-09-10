@@ -20,12 +20,21 @@ jobs:
         run: dotnet publish JanD -c release -r linux-x64 -o ./artifacts/JanD -p:VersionSuffix=nightly-linux-x64-aot-$(git rev-parse --short HEAD)
       - name: Strippping
         run: strip ./artifacts/JanD/JanD
+      - name: Move file
+        run: mv ./artifacts/JanD/JanD ./artifacts/JanD/jand-linux-x64-aot
       - name: Upload JanD
         uses: actions/upload-artifact@v2
+        if: startsWith(github.ref, 'refs/tags/') != true
         with:
           name: jand-linux-x64
-          path: ./artifacts/JanD/JanD
+          path: ./artifacts/JanD/jand-linux-x64-aot
           if-no-files-found: error
+      - name: Release
+        with:
+          draft: true
+          files: ./artifacts/JanD/jand-linux-x64-aot
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
   contained:
     runs-on: ubuntu-latest
     strategy:
@@ -42,12 +51,21 @@ jobs:
         run: dotnet restore JanD -r ${{ matrix.rid }} -p:NoNativeAOTPublish=h
       - name: Publish JanD
         run: dotnet publish JanD -c release -r ${{ matrix.rid }} -o ./artifacts/JanD -p:VersionSuffix=nightly-${{ matrix.rid }}-contained-$(git rev-parse --short HEAD) -p:NoNativeAOTPublish=h --self-contained -p:PublishReadyToRun=true -p:PublishSingleFile=true
+      - name: Move file
+        run: mv ./artifacts/JanD/JanD ./artifacts/JanD/jand-${{ matrix.rid }}-contained
       - name: Upload JanD
         uses: actions/upload-artifact@v2
+        if: startsWith(github.ref, 'refs/tags/') != true
         with:
           name: jand-${{ matrix.rid }}-contained
-          path: ./artifacts/JanD/JanD
+          path: ./artifacts/JanD/jand-${{ matrix.rid }}-contained
           if-no-files-found: error
+      - name: Release
+        with:
+          draft: true
+          files: ./artifacts/JanD/jand-${{ matrix.rid }}-contained
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
   # osx-aot:
   #   runs-on: macos-latest
   #   steps:
@@ -85,9 +103,18 @@ jobs:
         run: dotnet restore JanD -r win-x64
       - name: Publish JanD
         run: dotnet publish JanD -c release -r win-x64 -o ./artifacts/JanD -p:VersionSuffix=nightly-windows-x64-aot-$(git rev-parse --short HEAD)
+      - name: Move file
+        run: mv ./artifacts/JanD/JanD.exe ./artifacts/JanD/jand-windows-x64-aot.exe
       - name: Upload JanD
         uses: actions/upload-artifact@v2
+        if: startsWith(github.ref, 'refs/tags/') != true
         with:
           name: jand-windows-x64.exe
-          path: ./artifacts/JanD/JanD.exe
+          path: ./artifacts/JanD/jand-windows-x64-aot.exe
           if-no-files-found: error
+      - name: Release
+        with:
+          draft: true
+          files: ./artifacts/JanD/jand-windows-x64-aot.exe
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
