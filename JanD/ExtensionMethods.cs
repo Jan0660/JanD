@@ -88,6 +88,8 @@ namespace JanD
                 property.SetValue(obj, bool.Parse(value));
             else if (property.PropertyType == typeof(int))
                 property.SetValue(obj, int.Parse(value));
+            else if (property.PropertyType == typeof(string))
+                property.SetValue(obj, value);
         }
 
         public static string ToFullPath(this string path) => path.StartsWith('.') ? Path.GetFullPath(path) : path;

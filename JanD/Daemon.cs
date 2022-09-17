@@ -288,14 +288,16 @@ namespace JanD
                 {
                     var req = Util.DeserializeJson<SetPropertyIpcPacket>(packet.Data);
                     var process = GetProcess(req!.Process);
-                    var property = typeof(JanDProcess).GetPropertyCaseInsensitive(req.Property);
+                    // todo: dont
+                    Console.WriteLine(typeof(JanDProcessData).GetProperties(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public).Length);
+                    var property = typeof(JanDProcessData).GetPropertyCaseInsensitive(req.Property);
                     if (property == null)
                     {
                         pipeServer.Write("Invalid property.");
                         return;
                     }
 
-                    property.SetValueString(process, req.Data);
+                    property.SetValueString(process.Data, req.Data);
                     pipeServer.Write("done");
                     NotSaved = true;
                     ProcessPropertyUpdated(req.Process, req.Property, req.Data);
