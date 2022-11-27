@@ -125,10 +125,10 @@ namespace JanD
                 Daemon.DaemonConnection? connectionAt = null;
                 try
                 {
-                    // todo(perf): no LINQ
-                    foreach (var con in Daemon.Connections.Where(c =>
-                                 c.Events.HasFlag((whichStd == "out" ? DaemonEvents.OutLog : DaemonEvents.ErrLog))))
+                    foreach (var con in Daemon.Connections)
                     {
+                        if(!con.Events.HasFlag((whichStd == "out" ? DaemonEvents.OutLog : DaemonEvents.ErrLog)))
+                            continue;
                         con.EventSemaphore??= new SemaphoreSlim(1);
                         con.EventSemaphore.Wait();
                         connectionAt = con;
