@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace JanD
@@ -121,12 +122,19 @@ namespace JanD
                     ErrWriter.Write(str);
                 if (Daemon.Config.LogProcessOutput)
                     Console.Write(str);
+                Daemon.DaemonConnection? connectionAt = null;
                 try
                 {
+                    // todo(perf): no LINQ
                     foreach (var con in Daemon.Connections.Where(c =>
                                  c.Events.HasFlag((whichStd == "out" ? DaemonEvents.OutLog : DaemonEvents.ErrLog))))
                     {
-                        if ((whichStd == "out" ? con.OutLogSubs.Contains(Data.Name) : con.ErrLogSubs.Contains(Data.Name)))
+                        con.EventSemaphore??= new SemaphoreSlim(1);
+                        con.EventSemaphore.Wait();
+                        connectionAt = con;
+                        if ((whichStd == "out"
+                                ? con.OutLogSubs.Contains(Data.Name)
+                                : con.ErrLogSubs.Contains(Data.Name)))
                         {
                             var json = new Utf8JsonWriter(con.Stream);
                             json.WriteStartObject();
@@ -134,7 +142,6 @@ namespace JanD
                             json.WriteString("Process", Data.Name);
                             json.WriteString("Value", str);
                             json.WriteEndObject();
-                            json.Flush();
                             json.Dispose();
                             con.Stream.WriteByte((byte)'\n');
                             con.Stream.Flush();
@@ -144,6 +151,10 @@ namespace JanD
                 catch
                 {
                     // will be hit if connection interrupted, rest of the code should take care of disposing...
+                }
+                finally
+                {
+                    connectionAt?.EventSemaphore?.Release();
                 }
             }
 

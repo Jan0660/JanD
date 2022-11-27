@@ -515,8 +515,11 @@ namespace JanD
         {
             foreach (var connection in Connections)
             {
+                // todo(perf): HasFlag means boxing of daemonEvent
                 if (!connection.Events.HasFlag(daemonEvent))
                     continue;
+                connection.EventSemaphore??= new SemaphoreSlim(1);
+                await connection.EventSemaphore.WaitAsync();
                 try
                 {
                     var writer = new Utf8JsonWriter(connection.Stream);
@@ -526,7 +529,7 @@ namespace JanD
                     if (data != null)
                         writer.WriteString("Value", data);
                     writer.WriteEndObject();
-                    await writer.FlushAsync();
+                    await writer.DisposeAsync();
                     connection.Stream.WriteByte((byte)'\n');
                     await connection.Stream.FlushAsync();
                 }
@@ -534,12 +537,18 @@ namespace JanD
                 {
                     // connection interrupted, rest of the code will handle the cleanup...
                 }
+                finally
+                {
+                    connection.EventSemaphore.Release();
+                }
             }
         }
 
         public class DaemonConnection
         {
             public NamedPipeServerStream Stream;
+            // todo: don't initialize for every connection
+            public SemaphoreSlim? EventSemaphore;
             public DaemonEvents Events;
             public List<string> OutLogSubs;
             public List<string> ErrLogSubs;
