@@ -715,6 +715,45 @@ namespace JanD
             }
         }
 
+        [Verb("vacuum")]
+        public class VacuumCommand : ICommand
+        {
+            [Value(0, MetaName = "Processes$", Required = true)]
+            public IEnumerable<string> Processes { get; set; }
+
+            [Option("keep-lines", Default = 0, HelpText = "The number of lines to keep in each log file.")]
+            public int KeepLines { get; set; }
+
+            [Option("force", Default = false, HelpText = "If the command should be run without confirmation.")]
+            public bool Force { get; set; }
+
+            public async Task Run()
+            {
+                if (KeepLines < 0)
+                    throw new Exception("keep-lines must be greater than or equal to 0.");
+                if (KeepLines == 0 && !Force)
+                {
+                    Console.WriteLine("Are you sure you want to delete all log files? (y/n)");
+                    var key = Console.ReadKey();
+                    if (key.Key != ConsoleKey.Y)
+                        return;
+                }
+
+                var client = NewClient();
+                foreach (var process in client.GetProcessNames(Processes.ToArray()))
+                {
+                    client.WriteProcessName(process);
+                    var res = client.Vacuum(new VacuumRequest
+                    {
+                        KeepLines = KeepLines,
+                        Process = process,
+                        WhichStd = (int)WhichStd.Both,
+                    });
+                    Console.WriteLine(res);
+                }
+            }
+        }
+
         [Verb("compgen-proc-list", Hidden = true)]
         public class CompletionGeneration_ProcessList : ICommand
         {

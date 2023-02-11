@@ -59,14 +59,19 @@ namespace JanD.Lib
             return Encoding.UTF8.GetString(bytes[..count]);
         }
 
+        public void WriteProcessName(string proc)
+        {
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.Write(proc);
+            Console.ResetColor();
+            Console.Write(": ");
+        }
+
         public void DoRequests(Span<string> processes, string type)
         {
             foreach (var proc in processes)
             {
-                Console.ForegroundColor = ConsoleColor.Cyan;
-                Console.Write(proc);
-                Console.ResetColor();
-                Console.Write(": ");
+                WriteProcessName(proc);
                 Console.WriteLine(RequestString(type, proc));
             }
         }
@@ -141,5 +146,8 @@ namespace JanD.Lib
             public string Process { get; set; }
             public string Value { get; set; }
         }
+
+        public string Vacuum(VacuumRequest request)
+            => RequestString("vacuum", JsonSerializer.Serialize(request, typeof(VacuumRequest), MyJsonContext.Default));
     }
 }

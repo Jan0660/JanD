@@ -26,7 +26,20 @@ namespace JanD
         [JsonIgnore] public int RestartCount { get; set; }
         [JsonIgnore] public StreamWriter OutWriter { get; set; }
         [JsonIgnore] public StreamWriter ErrWriter { get; set; }
+        [JsonIgnore] public SemaphoreSlim LogsLock { get; set; } = new(1, 1);
         [JsonIgnore] public FileSystemWatcher FileSystemWatcher { get; set; }
+
+        public static string GetLogFileName(string processName, string whichStd)
+            => Path.Combine("./logs/", processName + "-" + whichStd + ".log");
+        public static StreamWriter GetStreamWriter(string processName, string whichStd, bool append = true)
+        {
+            if(whichStd != "out" && whichStd != "err")
+                throw new ArgumentException("whichStd must be either 'out' or 'err'");
+            return new StreamWriter(GetLogFileName(processName, whichStd), append)
+            {
+                AutoFlush = true
+            };
+        }
 
         public void Start()
         {
@@ -34,14 +47,8 @@ namespace JanD
                 return;
             Console.WriteLine(
                 Ansi.ForegroundColor($"Starting: Name: {Data.Name}; Filename: {Data.Filename}", 0, 247, 247));
-            OutWriter ??= new StreamWriter(Path.Combine("./logs/") + Data.Name + "-out.log", true)
-            {
-                AutoFlush = true
-            };
-            ErrWriter ??= new StreamWriter(Path.Combine("./logs/") + Data.Name + "-err.log", true)
-            {
-                AutoFlush = true
-            };
+            OutWriter ??= GetStreamWriter(Data.Name, "out");
+            ErrWriter ??= GetStreamWriter(Data.Name, "err");
             if (Data.Watch && FileSystemWatcher == null)
             {
                 FileSystemWatcher = new FileSystemWatcher(Data.WorkingDirectory)
@@ -85,7 +92,7 @@ namespace JanD
             process.Exited += (_, _) =>
             {
                 Console.WriteLine(Ansi.ForegroundColor(
-                    $"Exited: {Data.Name}; ExitCode: {process.ExitCode}; AutoRestart: {Data.AutoRestart}; ShouldRestart: {ShouldRestart};",
+                    $"Exited: {Data.Name}; ExitCode: {process.ExitCode}; AutoRestart: {Data.AutoRestart}; ShouldRestart: {ShouldRestart}; Stopped: {Stopped};",
                     0, 247,
                     247));
                 if (process.ExitCode != 0 && !Stopped)
@@ -113,6 +120,7 @@ namespace JanD
             {
                 if (eventArgs.Data == null)
                     return;
+                LogsLock.Wait();
                 var str = Ansi.ForegroundColor($"{Data.Name} {whichStd}| ", (byte)(whichStd == "err" ? 255 : 0),
                               (byte)(whichStd == "out" ? 255 : 0), 0) + eventArgs.Data +
                           '\n';
@@ -122,6 +130,7 @@ namespace JanD
                     ErrWriter.Write(str);
                 if (Daemon.Config.LogProcessOutput)
                     Console.Write(str);
+                LogsLock.Release();
                 Daemon.DaemonConnection? connectionAt = null;
                 try
                 {
@@ -129,7 +138,7 @@ namespace JanD
                     {
                         if(!con.Events.HasFlag((whichStd == "out" ? DaemonEvents.OutLog : DaemonEvents.ErrLog)))
                             continue;
-                        con.EventSemaphore??= new SemaphoreSlim(1);
+                        con.EventSemaphore ??= new SemaphoreSlim(1);
                         con.EventSemaphore.Wait();
                         connectionAt = con;
                         if ((whichStd == "out"

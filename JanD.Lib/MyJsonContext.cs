@@ -11,6 +11,7 @@ namespace JanD.Lib;
 [JsonSerializable(typeof(IpcPacket))]
 [JsonSerializable(typeof(DaemonStatus))]
 [JsonSerializable(typeof(IpcClient.DaemonClientEvent))]
+[JsonSerializable(typeof(VacuumRequest))]
 public partial class MyJsonContext : JsonSerializerContext
 {
 }

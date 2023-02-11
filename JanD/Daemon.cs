@@ -218,7 +218,9 @@ namespace JanD
         {
             if (Config.LogIpc)
                 DaemonLog("Received IPC: " + Encoding.UTF8.GetString(bytes.AsSpan()[..count]));
-            var packet = (IpcPacket)JsonSerializer.Deserialize(bytes.AsSpan()[..count], typeof(IpcPacket), MyJsonContext.Default);
+            var packet =
+                (IpcPacket)JsonSerializer.Deserialize(bytes.AsSpan()[..count], typeof(IpcPacket),
+                    MyJsonContext.Default);
             switch (packet!.Type)
             {
                 case "ping":
@@ -289,7 +291,9 @@ namespace JanD
                     var req = Util.DeserializeJson<SetPropertyIpcPacket>(packet.Data);
                     var process = GetProcess(req!.Process);
                     // todo: dont
-                    Console.WriteLine(typeof(JanDProcessData).GetProperties(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public).Length);
+                    Console.WriteLine(typeof(JanDProcessData)
+                        .GetProperties(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public)
+                        .Length);
                     var property = typeof(JanDProcessData).GetPropertyCaseInsensitive(req.Property);
                     if (property == null)
                     {
@@ -301,6 +305,68 @@ namespace JanD
                     pipeServer.Write("done");
                     NotSaved = true;
                     ProcessPropertyUpdated(req.Process, req.Property, req.Data);
+                    break;
+                }
+                case "vacuum":
+                {
+                    var req = Util.DeserializeJson<VacuumRequest>(packet.Data);
+                    var process = GetProcess(req!.Process);
+                    process.LogsLock.Wait();
+
+                    void Cleanup(in VacuumRequest req, in JanDProcess process, WhichStd whichStd)
+                    {
+                        var writer = whichStd == WhichStd.StdOut ? process.OutWriter : process.ErrWriter;
+                        writer.Dispose();
+                        if (req.KeepLines == 0)
+                        {
+                            if(whichStd == WhichStd.StdOut)
+                                process.OutWriter = JanDProcess.GetStreamWriter(process.Data.Name, "out", false);
+                            else
+                                process.ErrWriter = JanDProcess.GetStreamWriter(process.Data.Name, "err", false);
+                            return;
+                        }
+                        var filePath = JanDProcess.GetLogFileName(process.Data.Name,
+                            whichStd == WhichStd.StdOut ? "out" : "err");
+                        var fs = File.OpenRead(filePath);
+                        fs.Seek(0, SeekOrigin.End);
+
+                        var linesPassed = 0;
+                        while (linesPassed <= req.KeepLines)
+                        {
+                            if (fs.Position == 0)
+                                break;
+                            fs.Seek(-1, SeekOrigin.Current);
+                            var @byte = fs.ReadByte();
+                            linesPassed += @byte == '\n' ? 1 : 0;
+                            fs.Seek(-1, SeekOrigin.Current);
+                        }
+
+                        byte[] data = new byte[fs.Length - fs.Position];
+                        var bytesRead = fs.Read(data, 0, data.Length);
+                        if (bytesRead != data.Length)
+                            throw new Exception("bytes read != data length");
+                        fs.Dispose();
+                        if(whichStd == WhichStd.StdOut)
+                            process.OutWriter = JanDProcess.GetStreamWriter(process.Data.Name, "out", false);
+                        else
+                            process.ErrWriter = JanDProcess.GetStreamWriter(process.Data.Name, "err", false);
+                        writer = whichStd == WhichStd.StdOut ? process.OutWriter : process.ErrWriter;
+                        writer.Write(Encoding.UTF8.GetString(data));
+                        writer.Flush();
+                    }
+
+                    try
+                    {
+                        if ((req.WhichStd & (int)WhichStd.StdOut) != 0)
+                            Cleanup(req, process, WhichStd.StdOut);
+                        if ((req.WhichStd & (int)WhichStd.StdErr) != 0)
+                            Cleanup(req, process, WhichStd.StdErr);
+                        pipeServer.Write("done"u8);
+                    }
+                    finally
+                    {
+                        process.LogsLock.Release();
+                    }
                     break;
                 }
                 case "get-process-info":
@@ -339,7 +405,7 @@ namespace JanD
                     proc.CurrentUnstableRestarts = 0;
                     proc.Start();
                     proc.Stopped = false;
-                    pipeServer.Write(Encoding.UTF8.GetBytes("done"));
+                    pipeServer.Write("done"u8);
                     break;
                 }
                 case "new-process":
@@ -391,6 +457,7 @@ namespace JanD
                     {
                         processes[i] = Processes[i].Data;
                     }
+
                     Config.Processes = processes;
                     Config.SavedVersion = Program.Version;
                     var json = JsonSerializer.Serialize(Config, typeof(Config), ConfigJsonContext.Default);
@@ -518,7 +585,7 @@ namespace JanD
                 // todo(perf): HasFlag means boxing of daemonEvent
                 if (!connection.Events.HasFlag(daemonEvent))
                     continue;
-                connection.EventSemaphore??= new SemaphoreSlim(1);
+                connection.EventSemaphore ??= new SemaphoreSlim(1);
                 await connection.EventSemaphore.WaitAsync();
                 try
                 {
@@ -547,6 +614,7 @@ namespace JanD
         public class DaemonConnection
         {
             public NamedPipeServerStream Stream;
+
             // todo: don't initialize for every connection
             public SemaphoreSlim? EventSemaphore;
             public DaemonEvents Events;
