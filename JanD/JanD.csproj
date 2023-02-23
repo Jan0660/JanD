@@ -9,8 +9,8 @@
         <NoWarn>8618</NoWarn>
         <OutputType>Exe</OutputType>
         <TargetFramework>net7.0</TargetFramework>
-        <AssemblyVersion>0.7.2</AssemblyVersion>
-        <PackageVersion>0.7.2</PackageVersion>
+        <AssemblyVersion>0.8.0</AssemblyVersion>
+        <PackageVersion>0.8.0</PackageVersion>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <Authors>Jan0660</Authors>
         <Description>A process manager aiming for ease of use, predictable behaviour and respectable performance.</Description>
