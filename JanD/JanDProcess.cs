@@ -216,7 +216,8 @@ namespace JanD
             Process?.Kill(true);
             try
             {
-                Process?.WaitForExit();
+                if(!Process?.HasExited ?? false)
+                    Process?.WaitForExit();
             }
             finally
             {
