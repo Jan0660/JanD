@@ -24,7 +24,8 @@
         <PublishTrimmed Condition="'$(RuntimeIdentifier)' != ''">true</PublishTrimmed>
         <TrimMode>Link</TrimMode>
         <IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
-        <DebuggerSupport>false</DebuggerSupport>
+        <!-- after updating to .NET 8 preview 3 this makes publishing fail for some reason -->
+        <!--        <DebuggerSupport>false</DebuggerSupport>-->
         <EnableUnsafeBinaryFormatterSerialization>false</EnableUnsafeBinaryFormatterSerialization>
         <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
         <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)\GeneratedFiles</CompilerGeneratedFilesOutputPath>
