@@ -33,6 +33,7 @@
     <PropertyGroup Condition="'$(RuntimeIdentifier)' != '' And '$(NoNativeAOTPublish)' == ''">
         <PublishAot>true</PublishAot>
         <IlcGenerateStackTraceData>true</IlcGenerateStackTraceData>
+        <StripSymbols>true</StripSymbols>
     </PropertyGroup>
 
     <ItemGroup>
