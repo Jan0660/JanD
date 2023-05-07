@@ -8,7 +8,7 @@
     <PropertyGroup>
         <NoWarn>8618</NoWarn>
         <OutputType>Exe</OutputType>
-        <TargetFramework>net7.0</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
         <AssemblyVersion>0.8.0</AssemblyVersion>
         <PackageVersion>0.8.0</PackageVersion>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -38,7 +38,7 @@
         <PackageReference Include="CommandLineParser" Version="2.9.1" />
 <!--        <PackageReference Include="System.Text.Json" Version="7.0.0-preview.7.22375.6" />-->
 <!--        <PackageReference Condition="'$(RuntimeIdentifier)' != '' And '$(NoNativeAOTPublish)' == ''" Include="Microsoft.DotNet.ILCompiler" Version="7.0.0-*" />-->
-        <PackageReference Include="ThisAssembly.Constants" Version="1.0.9" />
+        <PackageReference Include="ThisAssembly.Constants" Version="1.2.9" />
     </ItemGroup>
     <ItemGroup>
         <TrimmerRootAssembly Include="JanD" />
